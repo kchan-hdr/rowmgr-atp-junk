@@ -54,6 +54,7 @@ namespace ExcelExport
             var hr = InsertRow(row++, d);
             var c = 0;
             WriteText(hr, GetColumnCode(c++), "Parcel ID", 1);
+            WriteText(hr, GetColumnCode(c++), "Impacted", 1);
             WriteText(hr, GetColumnCode(c++), "Owner Name", 1);
             WriteText(hr, GetColumnCode(c++), "Contact Name", 1);
             WriteText(hr, GetColumnCode(c++), "Date of Contact", 1);
@@ -63,35 +64,33 @@ namespace ExcelExport
             WriteText(hr, GetColumnCode(c++), "Contact Summary", 1);
             WriteText(hr, GetColumnCode(c++), "Agent Name", 1);
 
-            foreach(var par in items.Where(ix => ix.Project.Contains(line)).OrderBy(px => px.TrackingNumber))
-            {
-                if (par.Logs.Any())
-                {
-                    foreach (var cot in par.Logs.Where(px => px.ProjectPhase.EndsWith("Engagement")).OrderBy(pdt => pdt.DateAdded))
+
+            var eng2 = from px in items.Where(px => px.Project.Contains(line))
+                       from lx in px.Logs.Where(ix => ix.ProjectPhase.EndsWith("Engagement"))
+                       select new { px.Apn, px.IsImpacted, px.OwnerName, cot= lx };
+
+            foreach(var par in eng2.OrderByDescending(cdt => cdt.cot.DateAdded))
+            //foreach (var par in items.Where(ix => ix.Project.Contains(line)).OrderBy(px => px.TrackingNumber))
+            //{
+            //    if (par.Logs.Any())
+            //    {
+            //        foreach (var cot in par.Logs.Where(px => px.ProjectPhase.EndsWith("Engagement")).OrderBy(pdt => pdt.DateAdded))
                     {
                         var r = InsertRow(row++, d);
                         c = 0;
                         WriteText(r, GetColumnCode(c++), par.Apn);
+                        WriteText(r, GetColumnCode(c++), par.IsImpacted ? "Impacted Parcel" : "Parcel Not Impacted");
                         WriteText(r, GetColumnCode(c++), string.Join(" | ", par.OwnerName));
-                        WriteText(r, GetColumnCode(c++), cot.ContactNames);
-                        WriteDate(r, GetColumnCode(c++), cot.DateAdded.LocalDateTime);
+                        WriteText(r, GetColumnCode(c++), par.cot.ContactNames);
+                        WriteDate(r, GetColumnCode(c++), par.cot.DateAdded.LocalDateTime);
 
-                        WriteText(r, GetColumnCode(c++), cot.ContactChannel);
-                        WriteText(r, GetColumnCode(c++), cot.ProjectPhase);
+                        WriteText(r, GetColumnCode(c++), par.cot.ContactChannel);
+                        WriteText(r, GetColumnCode(c++), par.cot.ProjectPhase);
 
-                        WriteText(r, GetColumnCode(c++), cot.Title);
-                        WriteText(r, GetColumnCode(c++), cot.Notes);
-                        WriteText(r, GetColumnCode(c++), cot.AgentName);
-                    }
-                } 
-                //else
-                //{
-                //    var r = InsertRow(row++, d);
-                //    WriteText(r, GetColumnCode(0), par.Apn);
-                //    WriteText(r, GetColumnCode(1), string.Join(" | ", par.OwnerName));
-                //    WriteText(r, GetColumnCode(2), string.Join(" | ", par.Project));
-                //    WriteText(r, GetColumnCode(6), par.OutreachStatus);
-                //}
+                        WriteText(r, GetColumnCode(c++), par.cot.Title);
+                        WriteText(r, GetColumnCode(c++), par.cot.Notes);
+                        WriteText(r, GetColumnCode(c++), par.cot.AgentName);
+
             }
 
             sheets.Append(new Sheet { Id = bookPart.GetIdOfPart(p), SheetId = pageId, Name = $"{line} - Outreach" });
