@@ -13,7 +13,7 @@ namespace ROWM.Dal.Repository
 
             var q = from p in _context.Parcel.AsNoTracking()
                     join pa in _context.Allocations.AsNoTracking() on p.ParcelId equals pa.ParcelId
-                    where pa.ProjectPartId == part && p.IsActive
+                    where pa.ProjectPartId == part && p.IsActive && p.IsImpacted
                     select p;
 
             return q;

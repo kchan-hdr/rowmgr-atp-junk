@@ -1,7 +1,5 @@
 using geographia.ags;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using ROWM.Dal;
 using ROWM.Dal.Repository;
@@ -11,11 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Security.Claims;
-using System.Security.Cryptography.Xml;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-// using TxDotNeogitations;
 
 namespace ROWM.Controllers
 {
@@ -38,8 +32,9 @@ namespace ROWM.Controllers
         readonly UpdateParcelStatus2 _updater;
         readonly IFeatureUpdate _featureUpdate;
         readonly ISharePointCRUD _spDocument;
+        readonly DocTypes _docTypes;
 
-        public RowmController(ROWM_Context ctx, OwnerRepository r, ParcelStatusRepository l, ContactInfoRepository c, IStatisticsRepository sr, DeleteHelper del, UpdateParcelStatus2 u, IUpdateParcelStatus w, IParcelStatusHelper h, IFeatureUpdate f, ISharePointCRUD s)
+        public RowmController(ROWM_Context ctx, OwnerRepository r, ParcelStatusRepository l, ContactInfoRepository c, IStatisticsRepository sr, DeleteHelper del, UpdateParcelStatus2 u, IUpdateParcelStatus w, IParcelStatusHelper h, IFeatureUpdate f, ISharePointCRUD s, DocTypes dts)
         {
             _ctx = ctx;
             _repo = r;
@@ -52,6 +47,7 @@ namespace ROWM.Controllers
             _spDocument = s;
             _statusUpdate = w;
             _updater = u;
+            _docTypes = dts;
         }
         #endregion
         #region owner
@@ -87,7 +83,7 @@ namespace ROWM.Controllers
             update.ModifiedBy = User?.Identity?.Name ?? _APP_NAME;
             p = await update.Apply();
 
-            return new ParcelGraph(p, await _repo.GetDocumentsForParcel(pid));
+            return new ParcelGraph(p, _docTypes, await _repo.GetDocumentsForParcel(pid));
         }
 
 
@@ -258,7 +254,9 @@ namespace ROWM.Controllers
             if (p == null)
                 return BadRequest();
 
-            return Json(new ParcelGraph(p, await _repo.GetDocumentsForParcel(pid)));
+            var xxx = _docTypes.Types;
+
+            return Json(new ParcelGraph(p, _docTypes, await _repo.GetDocumentsForParcel(pid)));
         }
 
         [Route("parcels/{pid}/status"), HttpGet]
@@ -382,7 +380,7 @@ namespace ROWM.Controllers
             p.LastModified = DateTimeOffset.Now;
             p.ModifiedBy = _APP_NAME;
 
-            return Ok(new ParcelGraph(await _repo.UpdateParcel(p), await _repo.GetDocumentsForParcel(pid)));
+            return Ok(new ParcelGraph(await _repo.UpdateParcel(p), _docTypes, await _repo.GetDocumentsForParcel(pid)));
         }
 
         [Route("parcels/{pid}/finalOffer"), HttpPut]
@@ -420,7 +418,7 @@ namespace ROWM.Controllers
             p.LastModified = DateTimeOffset.Now;
             p.ModifiedBy = _APP_NAME;
 
-            return Json(new ParcelGraph(await _repo.UpdateParcel(p), await _repo.GetDocumentsForParcel(pid)));
+            return Json(new ParcelGraph(await _repo.UpdateParcel(p), _docTypes, await _repo.GetDocumentsForParcel(pid)));
         }
         #endregion
         #region parcel status
@@ -440,7 +438,7 @@ namespace ROWM.Controllers
 
             await ud.Apply();
 
-            return new ParcelGraph(p, await _repo.GetDocumentsForParcel(pid));
+            return new ParcelGraph(p, _docTypes, await _repo.GetDocumentsForParcel(pid));
         }
         [HttpPut("parcels/{pid}/status")]
         public async Task<ActionResult<ParcelGraph>> UpdateStatus(string pid, [FromBody] AcqRequest request)
@@ -468,7 +466,7 @@ namespace ROWM.Controllers
             //update.ModifiedBy = User?.Identity?.Name ?? _APP_NAME;
             //await update.Apply();
             
-            return new ParcelGraph(p, await _repo.GetDocumentsForParcel(pid));
+            return new ParcelGraph(p, _docTypes, await _repo.GetDocumentsForParcel(pid));
         }
         #endregion
         #region roe status
@@ -498,7 +496,7 @@ namespace ROWM.Controllers
 
             await ud.Apply();
 
-            return new ParcelGraph(p, await _repo.GetDocumentsForParcel(pid));
+            return new ParcelGraph(p, _docTypes, await _repo.GetDocumentsForParcel(pid));
         }
         #endregion
         #region community engagement
@@ -561,7 +559,7 @@ namespace ROWM.Controllers
                 }
             }
 
-            return new ParcelGraph(p, await _repo.GetDocumentsForParcel(pid));
+            return new ParcelGraph(p, _docTypes, await _repo.GetDocumentsForParcel(pid));
         }
         #endregion
         #region score
@@ -570,7 +568,7 @@ namespace ROWM.Controllers
         {
             await UpdateLandownerScore(score, DateTimeOffset.Now, new[] { pid });
             var p = await _repo.GetParcel(pid);
-            return Json(new ParcelGraph(p, await _repo.GetDocumentsForParcel(pid)));
+            return Json(new ParcelGraph(p, _docTypes, await _repo.GetDocumentsForParcel(pid)));
         }
         #endregion
         #endregion
@@ -612,7 +610,14 @@ namespace ROWM.Controllers
             };
 
             var log = await _repo.AddContactLog(myParcels, logRequest.ContactIds, l);
-            var touched = await PromptStatus(myParcels);
+            
+            var ptasks = myParcels.Select(px =>  _repo.GetParcel(px));
+            _statusUpdate.myParcels = await Task.WhenAll(ptasks);
+            _statusUpdate.myAgent = a;
+            _statusUpdate.StatusChangeDate = logRequest.DateAdded;
+            await _statusUpdate.Apply();
+
+            // var touched = await PromptStatus(myParcels);
 
             var sites = _featureUpdate as ReservoirParcel;
             if (sites != null)
@@ -702,6 +707,15 @@ namespace ROWM.Controllers
                 ProjectPhase = log.ProjectPhase,
                 Title = log.Title
             };
+        }
+
+        [HttpDelete("contactLogs/{lid:Guid}")]
+        public async Task<IActionResult> DeleteContactLog(Guid lid)
+        {
+            if (await _delete.DeleteContactLog(lid, User.Identity.Name))
+                return Ok();
+            else
+                return BadRequest();
         }
         #region contact status helper
         /// <summary>
@@ -1033,7 +1047,7 @@ namespace ROWM.Controllers
             OwnerType = o.OwnerType;
             OwnershipType = oType;
 
-            OwnedParcel = o.Ownership.Where(ox => ox.Parcel.IsActive).Select(ox => new ParcelHeaderDto(ox));
+            OwnedParcel = o.Ownership.Where(ox => ox.Parcel.IsActive && ox.Parcel.IsImpacted).Select(ox => new ParcelHeaderDto(ox));
             Contacts = o.ContactInfo.Where(cx => !cx.IsDeleted).Select(cx => new ContactInfoDto(cx));
             ContactLogs = o.ContactInfo
                 .Where(cx => cx.ContactLog != null)
@@ -1131,6 +1145,8 @@ namespace ROWM.Controllers
         public string SitusAddress { get; set; }
         public double Acreage { get; set; }
 
+        public bool IsImpacted { get; set; } = true;
+
         public Compensation InitialROEOffer { get; set; }
         public Compensation FinalROEOffer { get; set; }
         public Compensation InitialOptionOffer { get; set; }
@@ -1161,7 +1177,7 @@ namespace ROWM.Controllers
             return q.Any() ? q.OrderBy(cx => cx.EffectiveStartDate).FirstOrDefault() : default;
         }
 
-        internal ParcelGraph(Parcel p, IEnumerable<Document> d)
+        internal ParcelGraph(Parcel p, DocTypes docTypes, IEnumerable<Document> d)
         {
             ParcelId = p.Assessor_Parcel_Number;
             TractNo = p.Tracking_Number;
@@ -1172,20 +1188,22 @@ namespace ROWM.Controllers
             RoeStatusDate = p.Activities.Where(ax => ax.StatusCode == RoeStatusCode).OrderBy(ax => ax.ActivityDate).LastOrDefault()?.ActivityDate.LocalDateTime.ToShortDateString() ?? string.Empty;
 
             var cod = ActiveCondition(p.Conditions.ToArray());
-            if (cod!=null)
+            if (cod != null)
             {
                 // RoeCondition = p.Conditions.FirstOrDefault()?.Condition ?? "";
                 RoeCondition = cod.Condition;
                 RoeConditionStart = cod.EffectiveStartDate?.LocalDateTime;
                 RoeConditionEnd = cod.EffectiveEndDate?.LocalDateTime;
             }
-            
+
             OutreachStatusCode = p.OutreachStatusCode;
             SitusAddress = p.SitusAddress;
 
             LandownerScore = p.Landowner_Score;
 
             Acreage = p.Acreage ?? 0;
+            IsImpacted = p.IsImpacted;
+
             InitialEasementOffer = OfferHelper.MakeCompensation(p, "InitialEasement");
             InitialOptionOffer = OfferHelper.MakeCompensation(p, "InitialOption");
             InitialROEOffer = OfferHelper.MakeCompensation(p, "InitialROE");
@@ -1193,9 +1211,19 @@ namespace ROWM.Controllers
             FinalOptionOffer = OfferHelper.MakeCompensation(p, "FinalOption");
             FinalROEOffer = OfferHelper.MakeCompensation(p, "FinalROE");
 
-            Owners = p.Ownership.Select(ox => new OwnerDto(ox.Owner, ox.Ownership_t));
+            Owners = (p.Ownership.Any()) ? p.Ownership.Select(ox => new OwnerDto(ox.Owner, ox.Ownership_t))
+                // data issue. not common
+                : new List<OwnerDto> { new OwnerDto(
+                    new Owner { OwnerId = Guid.Empty, PartyName = "Owner Unknwon",
+                        ContactInfo = new List<ContactInfo> { new ContactInfo { FirstName = "lost & found", Email = "lost&found@hdrinc.com" } }  }, 1) };
+
             ContactsLog = p.ContactLog.Where(cx => !cx.IsDeleted).Select(cx => new ContactLogDto(cx));
-            Documents = d.Where(dx => !dx.IsDeleted).Select(dx => new DocumentHeader(dx));
+            Documents = d.Where(dx => !dx.IsDeleted).Select(dx =>
+            {
+                var dd = new DocumentHeader(dx);
+                dd.DisplayCategory = docTypes.Find(dd.DocumentType)?.DisplayCategory ?? dd.DocumentType;
+                return dd;
+            });
 
             ActionItems = p.ActionItems.Select(ax => new ActionItemDto { ActionItemId = ax.ActionItemId, Action = ax.Action, StatusCode = Enum.GetName(typeof(ActionStatus), ax.Status), DueDate = ax.DueDate });
         }

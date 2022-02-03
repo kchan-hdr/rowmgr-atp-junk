@@ -28,6 +28,7 @@ namespace ROWM.Controllers
         static readonly string _APP_NAME = "ROWM";
         #region ctor            
         private readonly ISharePointCRUD _sharePointCRUD;
+        readonly IUpdateParcelStatus _statusUpdate;
         private readonly UpdateParcelStatus2 _updater;
         private readonly IParcelStatusHelper _statusHelper;
         private readonly DocTypes _docTypes;
@@ -38,7 +39,7 @@ namespace ROWM.Controllers
         readonly TxDotNeogitations.ITxDotNegotiation _txDotHelper;
         readonly DeleteHelper _deleteHelper;
 
-        public DocumentController(ROWM_Context c, OwnerRepository r, IParcelStatusHelper h, ISharePointCRUD sp, UpdateParcelStatus2 u, IFeatureUpdate f, DeleteHelper del, DocTypes d)
+        public DocumentController(ROWM_Context c, OwnerRepository r, IParcelStatusHelper h, ISharePointCRUD sp, UpdateParcelStatus2 u, IFeatureUpdate f, DeleteHelper del, DocTypes d, IUpdateParcelStatus statusUpdate)
         {
             _ctx = c;
             _repo = r;
@@ -48,6 +49,7 @@ namespace ROWM.Controllers
             _featureUpdate = f;
             _statusHelper = h;
             _docTypes = d;
+            _statusUpdate = statusUpdate;
 
             //_txDotHelper = tx;
         }
@@ -435,6 +437,11 @@ namespace ROWM.Controllers
                 }
             }
 
+            var ptasks = myParcels.Select(px => _repo.GetParcel(px));
+            _statusUpdate.myParcels = await Task.WhenAll(ptasks);
+            _statusUpdate.myAgent = agent;
+            _statusUpdate.StatusChangeDate = header.DateRecorded ?? DateTimeOffset.Now;
+            await _statusUpdate.Apply();
 
             return Json(header);
         }
@@ -488,6 +495,7 @@ namespace ROWM.Controllers
     public class DocumentHeader
     {
         public string DocumentType { get; set; }
+        public string DisplayCategory { get; set; }
         public string DocumentTitle { get; set; }
         public string AgentName { get; set; }
         public Guid DocumentId { get; set; }

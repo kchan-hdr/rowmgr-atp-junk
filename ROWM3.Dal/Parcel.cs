@@ -43,7 +43,7 @@ namespace ROWM.Dal
 
         public DateTimeOffset LastModified { get; set; }
 
-        public bool IsDeleted { get; set; }
+        public bool IsDeleted { get; set; } = false;
 
         [StringLength(50)]
         public string ModifiedBy { get; set; }
@@ -93,7 +93,8 @@ namespace ROWM.Dal
         [StringLength(40)]
         public string OutreachStatusCode { get; set; }
 
-        public bool IsActive { get; set; }
+        public bool IsActive { get; set; } = true;
+        public bool IsImpacted { get; set; } = true;
 
         public int? Landowner_Score { get; set; }
 

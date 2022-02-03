@@ -1,12 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace ROWM.Dal
 {
@@ -14,9 +10,15 @@ namespace ROWM.Dal
     {
         public string DocTypeName { get; set; }
         public string Description { get; set; }
-        public string FolderPath { get; set; }
         public int DisplayOrder { get; set; }
         public bool IsDisplayed { get; set; }
+        public string ParentType { get; set; }
+        public string DisplayCategory { get; set; }
+        public string TitleHint { get; set; }
+
+        [JsonIgnore]
+        public string FolderPath { get; set; }
+
         [JsonIgnore]
         public Parcel_Status Milestone { get; set; }
 
@@ -26,9 +28,9 @@ namespace ROWM.Dal
     public class DocTypes : Collection<DocType>
     {
         #region static
-        Lazy<IEnumerable<DocType>> _Master;
+        readonly Lazy<IEnumerable<DocType>> _Master;
         public IEnumerable<DocType> AllTypes => _Master.Value.OrderBy(dt => dt.DisplayOrder);
-        public IEnumerable<DocType> Types => _Master.Value.Where(dt => dt.IsDisplayed).OrderBy(dt => dt.DisplayOrder);
+        public IEnumerable<DocType> Types => _Master.Value.OrderBy(dt => dt.DisplayOrder);
         public DocType Find(string n) => _Master.Value.SingleOrDefault(dt => dt.DocTypeName.Equals(n.Trim(), StringComparison.CurrentCultureIgnoreCase));
         public DocType Default => _Master.Value.Single(dt => dt.DocTypeName.Equals("Other"));
         #endregion
@@ -42,6 +44,20 @@ namespace ROWM.Dal
             _Master = new Lazy<IEnumerable<DocType>>(DocTypeLoad, System.Threading.LazyThreadSafetyMode.PublicationOnly);
         }
 
-        IEnumerable<DocType> DocTypeLoad() => _ctx.Document_Type.AsNoTracking().Select(dt => new DocType { DocTypeName = dt.DocTypeName, Description = dt.Description, DisplayOrder = dt.DisplayOrder, FolderPath = dt.FolderPath, IsDisplayed = dt.IsActive, Milestone = dt.Milestone }).ToArray();
+        IEnumerable<DocType> DocTypeLoad() => _ctx.Document_Type.AsNoTracking()
+            .Where(dt => dt.IsActive)
+            .Select(dt => new DocType 
+            { 
+                DocTypeName = dt.DocTypeName
+                , Description = dt.Description
+                , DisplayOrder = dt.DisplayOrder
+                , FolderPath = dt.FolderPath
+                , IsDisplayed = string.IsNullOrEmpty(dt.ParentType)
+                , Milestone = dt.Milestone 
+                , ParentType = dt.ParentType
+                , DisplayCategory = dt.DisplayCategory
+                , TitleHint = dt.TitleHint
+            })
+            .ToArray();
     }
 }

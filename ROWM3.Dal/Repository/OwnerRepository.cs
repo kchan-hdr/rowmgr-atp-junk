@@ -98,7 +98,7 @@ namespace ROWM.Dal
                 .FirstOrDefaultAsync(px => px.Tracking_Number.Equals(pid));
 
             if ( p==null)
-                throw new IndexOutOfRangeException($"cannot find parcel <{pid}>");
+                throw new KeyNotFoundException($"cannot find parcel <{pid}>");
 
             if (all)
             {
@@ -115,6 +115,79 @@ namespace ROWM.Dal
         }
         public IEnumerable<string> GetParcels() => ActiveParcels().AsNoTracking().Select(px => px.Assessor_Parcel_Number);
         public IEnumerable<Parcel> GetParcels2() => ActiveParcels().Include(px => px.Ownership.Select( o => o.Owner )).Include(px => px.Conditions).AsNoTracking();
+        public IEnumerable<RoeOwnerDto> GetRoeOwner()
+        {
+            var q = ActiveParcels()
+                    .Include(px => px.Ownership.Select(o => o.Owner))
+                    .Include(px => px.ContactLog)
+                    .Include(px => px.Activities)
+                    .AsNoTracking()
+                    .ToList();
+
+
+            return q.Select(px => new RoeOwnerDto(px));
+        }
+        public class RoeOwnerDto
+        {
+            public string Apn { get; set; } = "-";
+            public string PNum { get; set; } = "-";
+            public string Impacted { get; set; }
+            public string OName { get; set; } = "-";
+            public string Contacts { get; set; } = "";
+            public string Situs { get; set; } = "";
+            public string RoeReq { get; set; } = "";
+            public string RoeRec { get; set; } = "";
+            public string RoeStatus { get; set; } = "-";
+            public string Ltr { get; set; } = "";
+            public string LastContact { get; set; } = "-";
+
+            static readonly string[] RECEIVED = new string[] { "ROE_Full_Access", "ROE_Partial_Access" };
+            static readonly string REQUESTED = "ROE_Mailed";
+            static readonly string SENT = "Owner_Letter_Sent";
+
+            internal RoeOwnerDto(Parcel px)
+            {
+                var os = px.Ownership.OrderBy(ox => ox.IsPrimary() ? 1 : 2).FirstOrDefault();
+                OName = os?.Owner.PartyName?.TrimEnd(',') ?? "";
+                //var conditions = px.Conditions?.FirstOrDefault()?.Condition ?? "";
+
+                Contacts = string.Join("|", os?.Owner.ContactInfo.Select(sx => MakeContactSummary(sx)) ?? new string[] { "-" } );
+
+                Apn = px.Assessor_Parcel_Number;
+                Impacted = px.IsImpacted ? "Impacted Parcel" : "Parcel Not Impacted";
+                Situs = px.SitusAddress;
+                RoeStatus = px.Roe_Status.Description;
+
+                RoeReq = px.Activities.Any(ax => ax.StatusCode.Equals(REQUESTED)) 
+                    ? px.Activities.Where(ax => ax.StatusCode.Equals(REQUESTED)).Max(ax => ax.ActivityDate).DateTime.ToShortDateString() 
+                    : "-";
+
+                var qx = px.Activities.Where(ax => RECEIVED.Contains(ax.StatusCode));
+                RoeRec = qx.Any() ? qx.Max(ax => ax.ActivityDate).DateTime.ToShortDateString() : "-";
+                LastContact = px.ContactLog.Any() ? px.ContactLog.Max(cx => cx.DateAdded).Date.ToShortDateString() : "-";
+
+                Ltr = px.Activities.Any(ax => ax.StatusCode.Equals(SENT))
+                    ? px.Activities.Where(ax => ax.StatusCode.Equals(SENT)).Max(ax => ax.ActivityDate).DateTime.ToShortDateString() : "-";
+
+                //Contacts = "",
+                //RoeReq = "",
+                //RoeRec = "",
+                //RoeStatus = "",
+                //Ltr = "",
+                //LastContact = ""
+
+            }
+
+            private string MakeContactSummary(ContactInfo c)
+            {
+                var fullname = $"{c.FirstName} {c.LastName}".Trim();
+                var m = c.Email;
+                var ff = new string[] { c.WorkPhone, c.CellPhone, c.HomePhone };
+                var f = string.Join(",", ff.Where(fx => !string.IsNullOrWhiteSpace(fx)));
+
+                return string.Join(";", new string[] { fullname, $"email:{m}", $"phone:{f}" });
+            }
+        }
 
         public async Task<Parcel> UpdateParcel (Parcel p)
         {
@@ -399,6 +472,7 @@ namespace ROWM.Dal
                 .Select(p => new EngagementDto
                 {
                     Apn = p.px.Assessor_Parcel_Number,
+                    IsImpacted = p.px.IsImpacted,
                     TrackingNumber = p.px.Tracking_Number,
                     OwnerName = p.px.Ownership.Select(ox => ox.Owner.PartyName),
                     Contacts = p.px.Ownership.SelectMany(ox => ox.Owner.ContactInfo),
@@ -434,6 +508,7 @@ namespace ROWM.Dal
                 .Select(p => new EngagementDto
                 {
                     Apn = p.px.Assessor_Parcel_Number,
+                    IsImpacted = p.px.IsImpacted,
                     TrackingNumber = p.px.Tracking_Number,
                     OwnerName = p.px.Ownership.Select(ox => ox.Owner.PartyName),
                     Contacts = p.px.Ownership.SelectMany(ox => ox.Owner.ContactInfo),
@@ -470,6 +545,7 @@ namespace ROWM.Dal
         public class EngagementDto
         {
             public string Apn { get; set; }
+            public bool IsImpacted { get; set; }
             public string TrackingNumber { get; set; }
             public string OutreachStatus { get; set; }
 

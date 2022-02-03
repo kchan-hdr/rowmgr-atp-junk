@@ -30,7 +30,7 @@ namespace ROWM.Dal
             new SubTotal { Title = "2", Caption = "Unlikely", Count = 0 },
             new SubTotal { Title = "1", Caption = "Likely", Count = 0}};
 
-        protected IQueryable<Parcel> ActiveParcels() => _context.Parcel.Where(px => px.IsActive);
+        protected IQueryable<Parcel> ActiveParcels() => _context.Parcel.Where(px => px.IsActive && px.IsImpacted);
         protected virtual IQueryable<Parcel> ActiveParcels(int? part) => ActiveParcels();
 
         public async Task<(int nParcels, int nOwners)> Snapshot(int? part = null)

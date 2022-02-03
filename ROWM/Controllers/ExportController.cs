@@ -197,7 +197,39 @@ namespace ROWM.Controllers
                         var os = p.Ownership.OrderBy(ox => ox.IsPrimary() ? 1 : 2).FirstOrDefault();
                         var oname = os?.Owner.PartyName?.TrimEnd(',') ?? "";
                         var conditions = p.Conditions?.FirstOrDefault()?.Condition ?? "";
+
                         var row = $"{p.Assessor_Parcel_Number},\"{oname}\",{p.Roe_Status.Description},{conditions},{p.LastModified.Date.ToShortDateString()}";
+                        
+                        writer.WriteLine(row);
+                    }
+
+                    writer.Close();
+                }
+
+                return File(s.GetBuffer(), "text/csv", "roe.csv");
+            }
+        }
+
+        [HttpGet("export/roeowner")]
+        public IActionResult ExportRoeOwner(string f)
+        {
+            if ("excel" != f)
+                return BadRequest($"not supported export '{f}'");
+
+            var parcels = this._repo.GetRoeOwner();
+
+            if (parcels.Count() <= 0)
+                return NoContent();
+
+            using (var s = new MemoryStream())
+            {
+                using (var writer = new StreamWriter(s))
+                {
+                    writer.WriteLine("Parcel CAD,Parcel Number,Impacted,Owner,Primary Contact,Physical Address,ROE Requested Date,ROE Received Date,ROE Status,Community Engagement Letter Mailed Date,Last Owner Contact Date");
+
+                    foreach (var p in parcels.OrderBy(px => px.Apn))
+                    {
+                        var row = $"{p.Apn},\"{p.PNum}\",{p.Impacted},\"{p.OName}\",\"{p.Contacts}\",\"{p.Situs}\",{p.RoeReq},{p.RoeRec},{p.RoeStatus},{p.Ltr},{p.LastContact}";
                         writer.WriteLine(row);
                     }
 

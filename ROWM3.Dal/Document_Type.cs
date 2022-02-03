@@ -26,5 +26,11 @@ namespace ROWM.Dal
         [ForeignKey("Milestone")]
         public string MilestoneCode { get; set; }
         public virtual Parcel_Status Milestone { get; set; }
+
+        [Obsolete("not used")]
+        public string ParentType { get; set; }
+
+        public string DisplayCategory { get; set; }
+        public string TitleHint { get; set; }
     }
 }

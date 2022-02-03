@@ -15,8 +15,9 @@ namespace ROWM.Controllers
     {
         readonly IActionItemRepository _repo;
         readonly Notification _notify;
+        readonly IUpdateParcelStatus _statusUpdater;
 
-        public ActionItemController(IActionItemRepository ownerRepository, Notification n) => (_repo, _notify) = (ownerRepository, n);
+        public ActionItemController(IActionItemRepository ownerRepository, Notification n, IUpdateParcelStatus u) => (_repo, _notify, _statusUpdater) = (ownerRepository, n, u);
 
 
         [HttpGet("parcels/{pid}/actionitems")]
@@ -40,7 +41,10 @@ namespace ROWM.Controllers
 
             try
             {
-                await _notify.SendNotification(a.ActionItemId, Notification.NotificationType.New);
+                var notif = _notify.SendNotification(a.ActionItemId, Notification.NotificationType.New);
+                var upd = _statusUpdater.Apply();
+
+                await Task.WhenAll(new Task[] { notif, upd });
             }
             catch (Exception e)
             {
@@ -70,7 +74,10 @@ namespace ROWM.Controllers
                 if (item.Status != ActionStatus.Completed)
                 {
                     var t = item.Status == ActionStatus.Canceled ? Notification.NotificationType.Cancel : Notification.NotificationType.Update;
-                    await _notify.SendNotification(a.ActionItemId, t);
+                    var notif = _notify.SendNotification(a.ActionItemId, t);
+                    var upd = _statusUpdater.Apply();
+
+                    await Task.WhenAll(new Task[] { notif, upd });
                 }
             }
             catch (Exception e)

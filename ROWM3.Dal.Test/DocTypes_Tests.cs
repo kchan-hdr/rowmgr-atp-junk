@@ -18,7 +18,7 @@ namespace ROWM3.Dal.Test
             var docs = new ROWM.Dal.DocTypes(new ROWM.Dal.ROWM_Context());
             var t = docs.Types;
 
-            Assert.IsTrue(0 < t.Count(dt => dt.DocTypeName.StartsWith("Acquistion")));
+            Assert.IsTrue(t.Any(dt => dt.DocTypeName.StartsWith("Title")));
             Assert.AreEqual(0, t.Count(dt => dt.DocTypeName.StartsWith("option", StringComparison.CurrentCultureIgnoreCase)));
 
             foreach (var dt in t)
@@ -26,7 +26,7 @@ namespace ROWM3.Dal.Test
         }
 
 
-        [TestMethod]
+        [TestMethod, Ignore("new ATP types")]
         [TestCategory("Doc Types")]
         public void Find_V3()
         {
