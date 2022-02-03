@@ -56,7 +56,9 @@ namespace ROWM
             var cs = Configuration.GetConnectionString("ROWM_Context");
             services.AddScoped<ROWM.Dal.ROWM_Context>(fac =>
             {
-                return new Dal.ROWM_Context(cs);
+                var c = new Dal.ROWM_Context(cs);
+                c.Database.CommandTimeout = 300;
+                return c;
             });
             services.AddScoped<CostEstimateContext>(fac =>
             {
@@ -72,9 +74,9 @@ namespace ROWM
             services.AddScoped<ICostEstimateRepository, CostEstimateRepository>();
             services.AddScoped<ROWM.Dal.AppRepository>();
             services.AddScoped<DeleteHelper>();
-            services.AddScoped<ROWM.Dal.DocTypes>(fac => new DocTypes(fac.GetRequiredService<ROWM_Context>()));
+            services.AddSingleton<ROWM.Dal.DocTypes>(fac => new DocTypes(fac.GetRequiredService<ROWM_Context>()));
             services.AddScoped<Controllers.IParcelStatusHelper, Controllers.ParcelStatusHelperV2>();
-            services.AddScoped<IUpdateParcelStatus,UpdateParcelStatus_wharton>();
+            services.AddScoped<IUpdateParcelStatus,UpdateParcelStatus_austin>();
             services.AddScoped<UpdateParcelStatus2>();
             services.AddScoped<ActionItemNotification.Notification>();
 

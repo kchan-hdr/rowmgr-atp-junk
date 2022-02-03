@@ -56,7 +56,9 @@ namespace ROWM
             var cs = Configuration.GetConnectionString("ROWM_Context");
             services.AddScoped<ROWM.Dal.ROWM_Context>(fac =>
             {
-                return new Dal.ROWM_Context(cs);
+                var c = new Dal.ROWM_Context(cs);
+                c.Database.CommandTimeout = 300;
+                return c;
             });
             services.AddScoped(fac =>
             {
