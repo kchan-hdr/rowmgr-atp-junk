@@ -114,24 +114,67 @@ namespace ROWM.Dal
             }
         }
         public IEnumerable<string> GetParcels() => ActiveParcels().AsNoTracking().Select(px => px.Assessor_Parcel_Number);
-        public IEnumerable<Parcel> GetParcels2() => ActiveParcels().Include(px => px.Ownership.Select( o => o.Owner )).Include(px => px.Conditions).AsNoTracking();
+        public IEnumerable<Parcel> GetParcels2() => ActiveParcels()
+            .Include(px => px.Ownership.Select( o => o.Owner ))
+            .Include(px => px.Roe_Status)
+            .Include(px => px.Conditions).AsNoTracking();
+
         public IEnumerable<RoeOwnerDto> GetRoeOwner()
         {
             var q = ActiveParcels()
-                    .Include(px => px.Ownership.Select(o => o.Owner))
+                    .Include(px => px.Ownership.Select(o => o.Owner).Select(o => o.ContactInfo))
+                    .Include(px => px.Roe_Status)
+                    .Include(px => px.ParcelAllocations.Select(a => a.ProjectPart))
                     .Include(px => px.ContactLog)
                     .Include(px => px.Activities)
+                    .Include(px => px.Document)
+                    .Select(px => new ParcelDto
+                    {
+                        Assessor_Parcel_Number = px.Assessor_Parcel_Number,
+                        SitusAddress = px.SitusAddress,
+                        ParcelAllocations = px.ParcelAllocations,
+                        Roe_Status = px.Roe_Status,
+                        IsImpacted = px.IsImpacted,
+                        Ownership = px.Ownership,
+                        ContactLog = px.ContactLog.OrderByDescending(cx => cx.DateAdded).Take(1).ToList(),
+                        Activities = px.Activities.ToList(),
+                        //Document = px.Document.Where(dx => dx.DocumentType == "Engagement-Community-Engagement-Letter").OrderByDescending(dx => dx.SentDate).Take(1).ToList(),
+
+                        Owner = px.Ownership.OrderBy(ox => ox.Ownership_t == 1 ? 1 : 2).FirstOrDefault().Owner,
+                        PrimaryContact = px.Ownership.OrderBy(ox => ox.Ownership_t == 1 ? 1 : 2).FirstOrDefault().Owner.ContactInfo.FirstOrDefault(cx => cx.IsPrimaryContact),
+                        Projects = px.ParcelAllocations.Select(pa => pa.ProjectPart.Caption).ToList(),
+                        LetterSent = px.Document.Where(dx => dx.DocumentType == "Engagement-Community-Engagement-Letter").Max(dx => dx.SentDate)
+                    })
                     .AsNoTracking()
                     .ToList();
 
 
             return q.Select(px => new RoeOwnerDto(px));
         }
+
+        public class ParcelDto
+        {
+            public string Assessor_Parcel_Number { get; set; }
+            public string SitusAddress { get; set; }
+            public ICollection<ParcelAllocation> ParcelAllocations { get; set; }
+            public Roe_Status Roe_Status { get; set; }
+            public bool IsImpacted { get; set; }
+            public ICollection<Ownership> Ownership { get; set; }
+            public ICollection<ContactLog> ContactLog { get; set; }
+            public ICollection<StatusActivity> Activities { get; set; }
+            public ICollection<Document> Document { get; set; }
+
+            public Owner Owner { get; set; }
+            public List<string> Projects { get; set; }
+            public ContactInfo PrimaryContact { get; set; }
+            public DateTimeOffset? LetterSent { get; set; }
+        }
         public class RoeOwnerDto
         {
             public string Apn { get; set; } = "-";
             public string PNum { get; set; } = "-";
             public string Impacted { get; set; }
+            public string Projects { get; set; } = "-";
             public string OName { get; set; } = "-";
             public string Contacts { get; set; } = "";
             public string Situs { get; set; } = "";
@@ -145,13 +188,16 @@ namespace ROWM.Dal
             static readonly string REQUESTED = "ROE_Mailed";
             static readonly string SENT = "Owner_Letter_Sent";
 
-            internal RoeOwnerDto(Parcel px)
+            internal RoeOwnerDto(ParcelDto px)
             {
-                var os = px.Ownership.OrderBy(ox => ox.IsPrimary() ? 1 : 2).FirstOrDefault();
-                OName = os?.Owner.PartyName?.TrimEnd(',') ?? "";
-                //var conditions = px.Conditions?.FirstOrDefault()?.Condition ?? "";
+                //var os = px.Ownership.OrderBy(ox => ox.IsPrimary() ? 1 : 2).FirstOrDefault();
+                OName = px.Owner?.PartyName?.TrimEnd(',') ?? ""; // os?.Owner.PartyName?.TrimEnd(',') ?? "";
 
-                Contacts = string.Join("|", os?.Owner.ContactInfo.Select(sx => MakeContactSummary(sx)) ?? new string[] { "-" } );
+                // Contacts = string.Join("|", os?.Owner.ContactInfo.Select(sx => MakeContactSummary(sx)) ?? new string[] { "-" } );
+                //Contacts = string.Join("\n", os?.Owner.ContactInfo.Where(sx => sx.IsPrimaryContact).Select(sx => MakeContactSummary(sx)) ?? new string[] { "-" } );
+                Contacts = MakeContactSummary(px.PrimaryContact);
+
+                Projects = string.Join("\n", px.Projects); // px.ParcelAllocations.Select(pa => pa.ProjectPart.Caption));
 
                 Apn = px.Assessor_Parcel_Number;
                 Impacted = px.IsImpacted ? "Impacted Parcel" : "Parcel Not Impacted";
@@ -166,26 +212,22 @@ namespace ROWM.Dal
                 RoeRec = qx.Any() ? qx.Max(ax => ax.ActivityDate).DateTime.ToShortDateString() : "-";
                 LastContact = px.ContactLog.Any() ? px.ContactLog.Max(cx => cx.DateAdded).Date.ToShortDateString() : "-";
 
-                Ltr = px.Activities.Any(ax => ax.StatusCode.Equals(SENT))
-                    ? px.Activities.Where(ax => ax.StatusCode.Equals(SENT)).Max(ax => ax.ActivityDate).DateTime.ToShortDateString() : "-";
-
-                //Contacts = "",
-                //RoeReq = "",
-                //RoeRec = "",
-                //RoeStatus = "",
-                //Ltr = "",
-                //LastContact = ""
-
+                Ltr = px.LetterSent.HasValue ? px.LetterSent.Value.ToLocalTime().DateTime.ToShortDateString() : "-";
+                //Ltr = px.Activities.Any(ax => ax.StatusCode.Equals(SENT))
+                //    ? px.Activities.Where(ax => ax.StatusCode.Equals(SENT)).Max(ax => ax.ActivityDate).DateTime.ToShortDateString() : "-";
             }
 
             private string MakeContactSummary(ContactInfo c)
             {
-                var fullname = $"{c.FirstName} {c.LastName}".Trim();
-                var m = c.Email;
-                var ff = new string[] { c.WorkPhone, c.CellPhone, c.HomePhone };
-                var f = string.Join(",", ff.Where(fx => !string.IsNullOrWhiteSpace(fx)));
+                if (c == null) return "-";
 
-                return string.Join(";", new string[] { fullname, $"email:{m}", $"phone:{f}" });
+                var fullname = $"{c.FirstName} {c.LastName}".Trim();
+                return fullname;
+                //var m = c.Email;
+                //var ff = new string[] { c.WorkPhone, c.CellPhone, c.HomePhone };
+                //var f = string.Join(",", ff.Where(fx => !string.IsNullOrWhiteSpace(fx)));
+
+                //return string.Join("\n", new string[] { fullname, $"email:{m}", $"phone:{f}" });
             }
         }
 
@@ -271,6 +313,95 @@ namespace ROWM.Dal
         }
 
         public IEnumerable<Ownership> GetContacts() => _ctx.Parcel.Where(p => p.IsActive).SelectMany(p => p.Ownership);
+
+        public async Task<IEnumerable<ContactListDto>> GetContacts_AtpReport()
+        {
+            var q = from oo in _ctx.Owner.Include(ox => ox.ContactInfo)
+                        .Include(ox => ox.Ownership.Select(os => os.Parcel.Document))
+                    where oo.Ownership.Any(os => os.Parcel.IsActive)
+                    select oo;
+
+            var myOwners = await q.Select(oxx => new
+            {
+                oxx.PartyName, 
+                oxx.ContactInfo,
+                Related = oxx.Ownership.Select(p => p.Parcel.Assessor_Parcel_Number),
+                Letter = oxx.Ownership.SelectMany(p => p.Parcel.Document.Where(dx => dx.DocumentType == "Engagement-Community-Engagement-Letter").Select(dx => dx.SentDate))
+            }).ToArrayAsync();
+
+
+
+            //var o = _ctx.Parcel.Where(p => p.IsActive).Include(p => p.Ownership.Select(os => os.Owner).Select(ox => ox.ContactInfo)).Include(p => p.Document).SelectMany(p => p.Ownership);
+            //var og = o.GroupBy(ox => ox.OwnerId);
+            //var myContacts = await og.Select(oxx => new
+            //{
+            //    Related = oxx.Select(p => p.Parcel.Assessor_Parcel_Number),
+            //    Owner = oxx.FirstOrDefault().Owner,
+            //    Letter = oxx.FirstOrDefault().Parcel.Document.Where(dx => dx.DocumentType == "Engagement-Community-Engagement-Letter").Select(dx => dx.SentDate)
+            //}).ToArrayAsync();
+
+            var x = myOwners.Select(oxx => {
+                var ct = oxx.ContactInfo.OrderByDescending(cx => cx.IsPrimaryContact).FirstOrDefault();
+                return new ContactListDto
+                {
+                    relatedParcels = oxx.Related,
+                    letter = oxx.Letter?.Max()?.DateTime.ToShortDateString() ?? "",
+                    partyname = oxx.PartyName,
+                    ownerfirstname = ct?.FirstName,
+                    owneremail = ct?.Email,
+                    ownercellphone = ct?.CellPhone,
+                    ownerhomephone = ct?.HomePhone,
+                    ownerstreetaddress = ct?.StreetAddress,
+                    ownercity = ct?.City,
+                    ownerstate = ct?.State,
+                    ownerzip = ct?.ZIP,
+                    representation = ct?.Representation
+                };
+            });
+
+            return x;
+            //var 
+
+            //var ox = og.First();
+            //return ox.Owner.ContactInfo.Select(cx => new ContactExport2
+            //{
+            //    PartyName = ox.Owner.PartyName?.TrimEnd(',') ?? "",
+            //    IsPrimary = cx.IsPrimaryContact,
+            //    FirstName = cx.FirstName?.TrimEnd(',') ?? "",
+            //    LastName = cx.LastName?.TrimEnd(',') ?? "",
+            //    Email = cx.Email?.TrimEnd(',') ?? "",
+            //    CellPhone = cx.CellPhone?.TrimEnd(',') ?? "",
+            //    HomePhone = cx.HomePhone?.TrimEnd(',') ?? "",
+            //    StreetAddress = cx.StreetAddress?.TrimEnd(',') ?? "",
+            //    City = cx.City?.TrimEnd(',') ?? "",
+            //    State = cx.State?.TrimEnd(',') ?? "",
+            //    ZIP = cx.ZIP?.TrimEnd(',') ?? "",
+            //    Representation = cx.Representation,
+            //    ParcelId = relatedParcels
+            //});
+        }
+
+        #region export dto
+        public partial class ContactListDto
+        {
+            public string partyname { get; set; }
+            public int ownership_t { get; set; }
+            public bool isprimarycontact { get; set; }
+            public string ownerfirstname { get; set; }
+            public string ownerlastname { get; set; }
+            public string owneremail { get; set; }
+            public string ownercellphone { get; set; }
+            public string ownerhomephone { get; set; }
+            public string ownerstreetaddress { get; set; }
+            public string ownercity { get; set; }
+            public string ownerstate { get; set; }
+            public string ownerzip { get; set; }
+            public string representation { get; set; }
+
+            public IEnumerable<string> relatedParcels { get; set; }
+            public string letter { get; set; }
+        }
+        #endregion
 
         public IEnumerable<ContactLog> GetLogs() => ActiveLogs().Where(c => c.Parcel.Any(p => p.IsActive));
         public async Task<IEnumerable<DocHead>> GetDocs()

@@ -95,6 +95,7 @@
     <Compile Include="ContactLog.cs" />
     <Compile Include="Contact_Channel.cs" />
     <Compile Include="Contact_Purpose.cs" />
+    <Compile Include="DistributionList.cs" />
     <Compile Include="DocType.cs" />
     <Compile Include="Document.cs" />
     <Compile Include="DocumentActivity.cs" />

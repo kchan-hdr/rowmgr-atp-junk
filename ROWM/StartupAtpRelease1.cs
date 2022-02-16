@@ -81,7 +81,14 @@ namespace ROWM
 
             var feat = new AtpParcel("https://maps.hdrgateway.com/arcgis/rest/services/Texas/ATP_Parcel_FS/FeatureServer");
             services.AddSingleton<IFeatureUpdate>(feat);
-            services.AddSingleton<IRenderer>(new AtpParcel("https://maps.hdrgateway.com/arcgis/rest/services/Texas/ATP_ROW_MapService/MapServer"));
+            services.AddSingleton<IRenderer>(fac =>
+            {
+                var ctx = fac.GetRequiredService<ROWM_Context>();
+                var lay = ctx.MapConfiguration.FirstOrDefault(mx => mx.IsActive && mx.LayerType == LayerType.Reference && mx.ProjectPartId == null);
+                return (lay == null)
+                    ? new AtpParcel()
+                    : new AtpParcel(lay.AgsUrl);
+            });
             services.AddSingleton<IMapSymbology, AtpSymbology>();
 
             services.AddSingleton<TxDotNeogitations.ITxDotNegotiation, TxDotNeogitations.Sh72>();

@@ -33,9 +33,9 @@ namespace ExcelExport
             var hr = InsertRow(row++, d);
             var c = 0;
             WriteText(hr, GetColumnCode(c++), "Owner", 1);
-            WriteText(hr, GetColumnCode(c++), "Primary Contact", 1);
-            WriteText(hr, GetColumnCode(c++), "Contact Firstname", 1);
-            WriteText(hr, GetColumnCode(c++), "Contact Lastname", 1);
+            //WriteText(hr, GetColumnCode(c++), "Primary Contact", 1);
+            WriteText(hr, GetColumnCode(c++), "Contact Name", 1);
+            //WriteText(hr, GetColumnCode(c++), "Contact Lastname", 1);
             WriteText(hr, GetColumnCode(c++), "Contact EMail", 1);
             WriteText(hr, GetColumnCode(c++), "Contact Cell Phone", 1);
             WriteText(hr, GetColumnCode(c++), "Contact Home Phone", 1);
@@ -44,6 +44,7 @@ namespace ExcelExport
             WriteText(hr, GetColumnCode(c++), "Contact State", 1);
             WriteText(hr, GetColumnCode(c++), "Contact ZIP", 1);
             WriteText(hr, GetColumnCode(c++), "Representation", 1);
+            WriteText(hr, GetColumnCode(c++), "Engagement Letter Date", 1);
             WriteText(hr, GetColumnCode(c++), "Related Parcels", 1);
 
             foreach (var cx in items)
@@ -51,9 +52,9 @@ namespace ExcelExport
                 var r = InsertRow(row++, d);
                 c = 0;
                 WriteText(r, GetColumnCode(c++), cx.partyname);
-                WriteText(r, GetColumnCode(c++), cx.isprimarycontact ? "YES" : "NO");
+                //WriteText(r, GetColumnCode(c++), cx.isprimarycontact ? "YES" : "NO");
                 WriteText(r, GetColumnCode(c++), cx.ownerfirstname);
-                WriteText(r, GetColumnCode(c++), cx.ownerlastname);
+                //WriteText(r, GetColumnCode(c++), cx.ownerlastname);
                 WriteText(r, GetColumnCode(c++), cx.owneremail);
                 WriteText(r, GetColumnCode(c++), cx.ownercellphone);
                 WriteText(r, GetColumnCode(c++), cx.ownerhomephone);
@@ -62,6 +63,7 @@ namespace ExcelExport
                 WriteText(r, GetColumnCode(c++), cx.ownerstate);
                 WriteText(r, GetColumnCode(c++), cx.ownerzip);
                 WriteText(r, GetColumnCode(c++), cx.representation);
+                WriteText(r, GetColumnCode(c++), cx.LetterDate);
                 WriteText(r, GetColumnCode(c++), cx.parcelid);
             }
 
@@ -85,6 +87,8 @@ namespace ExcelExport
             public string ownerstate { get; set; }
             public string ownerzip { get; set; }
             public string representation { get; set; }
+
+            public string LetterDate { get; set; }
         }
         #endregion
     }

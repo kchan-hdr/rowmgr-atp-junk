@@ -44,6 +44,7 @@ namespace ROWM.Dal
         public virtual DbSet<StatusCategory> StatusCategory { get; set; } 
 
         public virtual DbSet<DocumentTiltlePl> DocumentTitlePicklist { get; set; }
+        public virtual DbSet<DistributionList> DistributionList { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {

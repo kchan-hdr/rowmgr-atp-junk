@@ -190,15 +190,23 @@ namespace ROWM.Controllers
             {
                 using (var writer = new StreamWriter(s))
                 {
-                    writer.WriteLine("Parcel CAD,Owner,ROE Status,Conditions,Date");
+                    writer.WriteLine("Parcel CAD,Owner,ROE Status,Conditions,Condition Expires,Date Status Last Modified");
 
                     foreach (var p in parcels.OrderBy(px => px.Assessor_Parcel_Number))
                     {
                         var os = p.Ownership.OrderBy(ox => ox.IsPrimary() ? 1 : 2).FirstOrDefault();
                         var oname = os?.Owner.PartyName?.TrimEnd(',') ?? "";
-                        var conditions = p.Conditions?.FirstOrDefault()?.Condition ?? "";
 
-                        var row = $"{p.Assessor_Parcel_Number},\"{oname}\",{p.Roe_Status.Description},{conditions},{p.LastModified.Date.ToShortDateString()}";
+                        var conditions = "";
+                        var conditionsExp = "";
+                        if (p.Conditions != null && p.Conditions.Any())
+                        {
+                            var cond = p.Conditions?.OrderByDescending(px => px.EffectiveStartDate.HasValue ? px.EffectiveStartDate.Value : DateTime.MinValue).FirstOrDefault();
+                            conditions = cond?.Condition ?? "";
+                            conditionsExp = cond?.EffectiveStartDate?.DateTime.ToShortDateString() ?? "";
+                        }
+
+                        var row = $"{p.Assessor_Parcel_Number},\"{oname}\",{p.Roe_Status.Description},\"{conditions}\",{conditionsExp},{p.LastModified.Date.ToShortDateString()}";
                         
                         writer.WriteLine(row);
                     }
@@ -221,72 +229,59 @@ namespace ROWM.Controllers
             if (parcels.Count() <= 0)
                 return NoContent();
 
-            using (var s = new MemoryStream())
-            {
-                using (var writer = new StreamWriter(s))
-                {
-                    writer.WriteLine("Parcel CAD,Parcel Number,Impacted,Owner,Primary Contact,Physical Address,ROE Requested Date,ROE Received Date,ROE Status,Community Engagement Letter Mailed Date,Last Owner Contact Date");
+            var printDate = $"as of {DateTime.Today.ToLongDateString()}";
 
-                    foreach (var p in parcels.OrderBy(px => px.Apn))
-                    {
-                        var row = $"{p.Apn},\"{p.PNum}\",{p.Impacted},\"{p.OName}\",\"{p.Contacts}\",\"{p.Situs}\",{p.RoeReq},{p.RoeRec},{p.RoeStatus},{p.Ltr},{p.LastContact}";
-                        writer.WriteLine(row);
-                    }
+            var excel = new ExcelExport.RoeOwnerReport();
+            var buffer = excel.CreatePackage(printDate, parcels);
 
-                    writer.Close();
-                }
-
-                return File(s.GetBuffer(), "text/csv", "roe.csv");
-            }
+            return File(buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "roe-owner report.xlsx");
         }
 
-        //        return File(s.GetBuffer(), "text/csv", "acq.csv");
-        //    }
-        //}
+
         /// <summary>
         /// support excel only
         /// </summary>
         /// <param name="f"></param>
         /// <returns></returns>
         [HttpGet("export/contacts")]
-        public IActionResult ExportContact(string f)
+        public async Task< IActionResult> ExportContact(string f)
         {
             if ("excel" != f)
                 return BadRequest($"not supported export '{f}'");
 
-            var contacts = this._repo.GetContacts();
+            var contacts = await this._repo.GetContacts_AtpReport();
+            //var contacts = this._repo.GetContacts();
 
-            var q = from o in contacts
-                    group o by o.OwnerId into og
-                    select og;
+            //var q = from o in contacts
+            //        group o by o.OwnerId into og
+            //        select og;
 
-            var cc = q.SelectMany(og => ContactExport2.Export(og));
+            //var cc = q.SelectMany(og => ContactExport2.Export(og));
 
-            if (cc.Count() <= 0)
+            if (contacts.Count() <= 0)
                 return NoContent();
 
             // to do. inject export engine
             try
             {
-                var data = cc.OrderBy(cx => cx.PartyName)
-                                            .ThenByDescending(cx => cx.IsPrimary)
-                                            .ThenBy(cx => cx.LastName)
-                                            .Select(ccx => new ExcelExport.ContactListExport.ContactList
-                                            {
-                                                partyname = ccx.PartyName,
-                                                isprimarycontact = ccx.IsPrimary,
-                                                ownerfirstname = ccx.FirstName,
-                                                ownerlastname = ccx.LastName,
-                                                owneremail = ccx.Email,
-                                                ownercellphone = ccx.CellPhone,
-                                                ownerhomephone = ccx.HomePhone,
-                                                ownerstreetaddress = ccx.StreetAddress,
-                                                ownercity = ccx.City,
-                                                ownerstate = ccx.State,
-                                                ownerzip = ccx.ZIP,
-                                                representation = ccx.Representation,
-                                                parcelid = string.Join(",", ccx.ParcelId)
-                                            });
+                var data = contacts
+                    .Where(cx => !string.IsNullOrWhiteSpace(cx.ownerfirstname) || !string.IsNullOrWhiteSpace(cx.letter))
+                    .OrderBy(cx => cx.partyname)
+                    .Select(ccx => new ExcelExport.ContactListExport.ContactList
+                    {
+                        partyname = ccx.partyname,
+                        ownerfirstname = ccx.ownerfirstname,
+                        owneremail = ccx.owneremail,
+                        ownercellphone = ccx.ownercellphone,
+                        ownerhomephone = ccx.ownerhomephone,
+                        ownerstreetaddress = ccx.ownerstreetaddress,
+                        ownercity = ccx.ownercity,
+                        ownerstate = ccx.ownerstate,
+                        ownerzip = ccx.ownerzip,
+                        representation = ccx.representation,
+                        parcelid = string.Join(",", ccx.relatedParcels.OrderBy(r => r)),
+                        LetterDate = ccx.letter
+                    });
 
                 var e = new ExcelExport.ContactListExport(data, LogoPath.Value);
                 var bytes = e.Export();
@@ -294,23 +289,7 @@ namespace ROWM.Controllers
             }
             catch (Exception)
             {
-                using (var s = new MemoryStream())
-                {
-                    using (var writer = new StreamWriter(s))
-                    {
-                        writer.WriteLine(ContactExport2.Header());
-
-                        foreach (var l in cc.OrderBy(cx => cx.PartyName)
-                                            .ThenByDescending(cx => cx.IsPrimary)
-                                            .ThenBy(cx => cx.LastName)
-                                            .Select(ccx => ccx.ToString()))
-                            writer.WriteLine(l);
-
-                        writer.Close();
-                    }
-
-                    return File(s.GetBuffer(), "text/csv", "contacts.csv");
-                }
+                return BadRequest();
             }
         }
 

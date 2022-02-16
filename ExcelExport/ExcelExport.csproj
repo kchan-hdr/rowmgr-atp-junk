@@ -183,11 +183,13 @@
     <Compile Include="AgentLogExport.cs" />
     <Compile Include="ContactListExport.cs" />
     <Compile Include="EngagementExport.cs" />
+    <Compile Include="GeneratedClass.cs" />
     <Compile Include="RgiListExport.cs" />
     <Compile Include="RoeListExport.cs" />
     <Compile Include="DocListExport.cs" />
     <Compile Include="Exporter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RoeOwner_GeneratedClass.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
