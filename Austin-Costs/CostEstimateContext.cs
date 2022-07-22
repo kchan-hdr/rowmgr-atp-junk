@@ -12,5 +12,7 @@ namespace Austin_Costs
         public CostEstimateContext(string c) : base(c) { }
 
         public DbSet<CostEstimate> Estimates { get; set; }
+        public DbSet<ProjDetailsCostEstimate> ProjDetailsCostEstimates { get; set; } 
+        public DbSet<AcquisitionKey> AcquisitionKeys { get; set; }
     }
 }

@@ -61,12 +61,18 @@ namespace ROWM.Dal
                 return false;
             }
 
-            // Otherwise
-            // Action Pending - has a pending action item
-            // No current action - no open action
-            var hasOpenAction = p.ActionItems.Any(ax => ax.Status == ActionStatus.Pending);
+            string newCode = "Not_Contacted";
+            if (hasLetter)
+                newCode = "Owner_Letter_Sent";
 
-            var newCode = hasOpenAction ? "Action_Required" : "No_Action";
+            if (hasContact)
+                newCode = "Owner_Meeting";
+            //// Otherwise
+            //// Action Pending - has a pending action item
+            //// No current action - no open action
+            //var hasOpenAction = p.ActionItems.Any(ax => ax.Status == ActionStatus.Pending);
+
+            //var newCode = hasOpenAction ? "Action_Required" : "No_Action";
 
             if (p.OutreachStatusCode != newCode)
             {

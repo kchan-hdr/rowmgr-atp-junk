@@ -16,10 +16,10 @@ namespace ROWM.Controllers
         public CostEstimateController(ICostEstimateRepository r) => _repo = r;
 
         [HttpGet("api/parcels/{parcelKey}/costs")]
-        [ProducesDefaultResponseType(typeof(IEnumerable<CostEstimate>))]
-        public IActionResult Get(string parcelKey)
+        [ProducesDefaultResponseType(typeof(IEnumerable<ProjDetailsCostEstimate>))]
+        public async Task<IActionResult> Get(string parcelKey)
         {
-            var estimate = _repo.Get(parcelKey);
+            var estimate = await _repo.GetEx(parcelKey);
             if (!estimate.Any())
                 return BadRequest($"parcel key not found {parcelKey}");
 

@@ -51,6 +51,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AcquisitionKey.cs" />
+    <Compile Include="CostEst.cs" />
     <Compile Include="CostEstimate.cs" />
     <Compile Include="CostEstimateContext.cs" />
     <Compile Include="CostEstimateRepository.cs" />

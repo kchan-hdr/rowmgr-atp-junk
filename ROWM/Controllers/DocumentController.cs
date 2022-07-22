@@ -405,7 +405,8 @@ namespace ROWM.Controllers
                 {
                     var ud = new UpdateParcelStatus(new Parcel[] { myParcel }, agent, context: _ctx, _repo, _featureUpdate, _statusHelper)
                     {
-                        AcquisitionStatus = s.Code,
+                        AcquisitionStatus = s.Category == "acquisition" ?  s.Code : string.Empty,
+                        RoeStatus = s.Category == "roe" ? s.Code : string.Empty,
                         ModifiedBy = User?.Identity?.Name ?? _APP_NAME
                     };
 

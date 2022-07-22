@@ -77,7 +77,7 @@ namespace ROWM.Dal
                 var pid = p.Assessor_Parcel_Number;
                 var track = p.Tracking_Number;
 
-                if (this.AcquisitionStatus != null && p.ParcelStatusCode != this.AcquisitionStatus)
+                if (!string.IsNullOrEmpty(this.AcquisitionStatus) && p.ParcelStatusCode != this.AcquisitionStatus)
                 {
                     history.OriginalStatusCode = p.ParcelStatusCode;
                     history.StatusCode = this.AcquisitionStatus;
@@ -89,7 +89,7 @@ namespace ROWM.Dal
                     tks.Add(this._featureUpdate.UpdateFeature(pid, track, dv));
                 }
 
-                if (this.RoeStatus != null && p.RoeStatusCode != this.RoeStatus)
+                if (!string.IsNullOrEmpty(this.RoeStatus) && p.RoeStatusCode != this.RoeStatus)
                 {
                     history.OriginalStatusCode = p.RoeStatusCode;
                     history.StatusCode = this.RoeStatus;
