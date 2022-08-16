@@ -163,6 +163,7 @@
     <Compile Include="ROWM_Context.cs" />
     <Compile Include="StatusActivity.cs" />
     <Compile Include="StatusCategory.cs" />
+    <Compile Include="VestedOwner.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

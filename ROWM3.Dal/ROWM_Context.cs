@@ -46,6 +46,9 @@ namespace ROWM.Dal
         public virtual DbSet<DocumentTiltlePl> DocumentTitlePicklist { get; set; }
         public virtual DbSet<DistributionList> DistributionList { get; set; }
 
+        public virtual DbSet<VestedOwner> VestedOwner { get; set; }
+
+
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Agent>()
