@@ -40,7 +40,7 @@ namespace ROWM.Models
             // get all documents
             var mydocs = parcel.Document.Select(d => d.DocumentType)?.Distinct() ?? default;
             if ( mydocs.Any())
-                statux.AddRange(mydocs.Select(d => _DOCTYPES.Find(d).Milestone).Where(mx => mx != null));
+                statux.AddRange(mydocs.Select(d => _DOCTYPES.Find(d)?.Milestone).Where(mx => mx != null));  // ignore - inactive - document types
 
             // get all logs
             if (_PURPOSE == null)
