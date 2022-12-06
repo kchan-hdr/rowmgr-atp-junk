@@ -179,10 +179,10 @@ namespace ROWM.Controllers
         }
 
         [HttpDelete("contacts/{cid:Guid}")]
-        public async Task<IActionResult> DeleteContact(Guid cid)
+        public async Task<ActionResult> DeleteContact(Guid cid)
         {
             if (await _delete.DeleteContact(cid, User.Identity.Name))
-                return Ok();
+                return Ok(cid);
             else
                 return BadRequest();
         }
@@ -610,9 +610,11 @@ namespace ROWM.Controllers
             };
 
             var log = await _repo.AddContactLog(myParcels, logRequest.ContactIds, l);
-            
-            var ptasks = myParcels.Select(px =>  _repo.GetParcel(px));
-            _statusUpdate.myParcels = await Task.WhenAll(ptasks);
+
+            var pxs = await _repo.GetParcels(myParcels);
+            _statusUpdate.myParcels = pxs;
+            //var ptasks = myParcels.Select(px => _repo.GetParcel(px));
+            //_statusUpdate.myParcels = await Task.WhenAll(ptasks);
             _statusUpdate.myAgent = a;
             _statusUpdate.StatusChangeDate = logRequest.DateAdded;
             await _statusUpdate.Apply();
@@ -710,10 +712,10 @@ namespace ROWM.Controllers
         }
 
         [HttpDelete("contactLogs/{lid:Guid}")]
-        public async Task<IActionResult> DeleteContactLog(Guid lid)
+        public async Task<ActionResult> DeleteContactLog(Guid lid)
         {
             if (await _delete.DeleteContactLog(lid, User.Identity.Name))
-                return Ok();
+                return Ok(lid);
             else
                 return BadRequest();
         }

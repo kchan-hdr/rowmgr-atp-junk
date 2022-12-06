@@ -55,6 +55,15 @@ namespace ROWM.Dal
 
             return p;
         }
+
+        public Task<Parcel[]> GetParcels(IEnumerable<string> pids) =>
+            ActiveParcels()
+                .Include(px => px.Ownership.Select(o => o.Owner.ContactLog))
+                .Include(px => px.ContactLog)
+                .Include(px => px.ActionItems)
+                .Where(px => pids.Contains(px.Tracking_Number))
+                .ToArrayAsync();
+
         public async Task<List<Document>> GetDocumentsForParcel(string pid)
         {
             var p = await ActiveParcels().FirstOrDefaultAsync(px => px.Tracking_Number.Equals(pid));
@@ -71,7 +80,10 @@ namespace ROWM.Dal
                 DateRecorded = dx.DateRecorded,
                 Created = dx.Created,
                 LastModified = dx.LastModified,
-                IsDeleted = dx.IsDeleted
+                IsDeleted = dx.IsDeleted,
+
+                ContentType = dx.ContentType,
+                CheckNo = dx.Content?.Length.ToString() ?? "0"
             });
 
             return query.ToList();
