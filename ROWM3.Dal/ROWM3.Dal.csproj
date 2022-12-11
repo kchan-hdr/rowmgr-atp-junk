@@ -150,6 +150,7 @@
     <Compile Include="Repesentation_Type.cs" />
     <Compile Include="Repository\ActionItemRepository.cs" />
     <Compile Include="Repository\AppRepository.cs" />
+    <Compile Include="Repository\AustinFilteredStatisticsRepository.cs" />
     <Compile Include="Repository\ContactInfoRepository.cs" />
     <Compile Include="Repository\DeleteHelper.cs" />
     <Compile Include="Repository\FilteredStatisticsRepository.cs" />

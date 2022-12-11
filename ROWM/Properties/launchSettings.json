@@ -37,6 +37,14 @@
         "ASPNETCORE_HOSTINGSTARTUP__KEYVAULT__CONFIGURATIONVAULT": "https://blackhill-dev-keys.vault.azure.net"
       },
       "applicationUrl": "http://localhost:54062"
+    },
+    "ROWM-UI": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "AtpV2UI"
+      }
     }
   }
 }

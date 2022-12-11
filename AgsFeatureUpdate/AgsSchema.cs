@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -34,7 +31,7 @@ namespace geographia.ags
         {
             var info = await _service.Layers<AgsInfo>();
 
-            _layers = new Dictionary<string, long>(); // (list.Select(lx => new KeyValuePair<string, long>(lx.Name.ToLower(), lx.Id)));
+            _layers = new Dictionary<string, long>();
 
             var list = new List<IdInfo>();
             list.AddRange(info.Layers);
@@ -42,13 +39,6 @@ namespace geographia.ags
 
             _layers = list.Distinct(new IdInfo())
                 .ToDictionary(i => i.Name.ToLower(), i => i.Id);
-
-            //foreach (var lx in list)
-            //{
-            //    var n = lx.Name.ToLower();
-            //    if ( !_layers.ContainsKey(n))
-            //        _layers.Add(n, lx.Id);
-            //}
 
             return _layers.Count > 0;
         }

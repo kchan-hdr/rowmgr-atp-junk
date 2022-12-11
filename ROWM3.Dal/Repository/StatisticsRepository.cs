@@ -21,7 +21,7 @@ namespace ROWM.Dal
         }
         #endregion
 
-        Lazy<IEnumerable<SubTotal>> _baseParcels;
+        protected Lazy<IEnumerable<SubTotal>> _baseParcels;
         Lazy<IEnumerable<SubTotal>> _baseRoes;
         Lazy<IEnumerable<SubTotal>> _baseClearances;
 
@@ -44,7 +44,7 @@ namespace ROWM.Dal
             return (np, no);
         }
 
-        public async Task<IEnumerable<SubTotal>> SnapshotParcelStatus(int? part=null)
+        public virtual async Task<IEnumerable<SubTotal>> SnapshotParcelStatus(int? part=null)
         {
             /// TODO: this is too restrictive. need to handle both with/without roll-up
             var q1 = await (from p in ActiveParcels(part)
