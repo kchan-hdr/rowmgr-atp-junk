@@ -156,6 +156,7 @@
     <Compile Include="Repository\FilteredStatisticsRepository.cs" />
     <Compile Include="Repository\IStatisticsRepository.cs" />
     <Compile Include="Repository\OwnerRepository.cs" />
+    <Compile Include="Repository\ParcelOwnershipHelper.cs" />
     <Compile Include="Repository\ParcelStatusRepository.cs" />
     <Compile Include="Repository\StatisticsRepository.cs" />
     <Compile Include="RoeCondition.cs" />
