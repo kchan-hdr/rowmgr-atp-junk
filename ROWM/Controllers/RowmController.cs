@@ -1213,7 +1213,7 @@ namespace ROWM.Controllers
             FinalOptionOffer = OfferHelper.MakeCompensation(p, "FinalOption");
             FinalROEOffer = OfferHelper.MakeCompensation(p, "FinalROE");
 
-            Owners = (p.Ownership.Any()) ? p.Ownership.Select(ox => new OwnerDto(ox.Owner, ox.Ownership_t))
+            Owners = (p.Ownership.Any()) ? p.Ownership.Where(ox => ox.IsCurrentOwner).Select(ox => new OwnerDto(ox.Owner, ox.Ownership_t))
                 // data issue. not common
                 : new List<OwnerDto> { new OwnerDto(
                     new Owner { OwnerId = Guid.Empty, PartyName = "Owner Unknwon",

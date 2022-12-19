@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ROWM.Dal;
 using System;
+using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,17 +17,17 @@ namespace ROWM.Controllers
         public AcquisitionUnitController(OwnerRepository o, ROWM_Context c) => (_repo, _ctx) = (o, c);
 
         [HttpGet("acqUnits/{tractNo}")]
-        public async Task<ActionResult> GetUnitParcelsByApn(string tractNo)
+        public async Task<ActionResult<IEnumerable<PackageParcel>>> GetUnitParcelsByApn(string tractNo)
         {
             var parcels = await _ctx.Parcel.Where(px => px.Tracking_Number == tractNo).ToArrayAsync();
             if (!(parcels?.Any() ?? false))
                 return NotFound();
 
-            return new JsonResult(parcels.Select(px => new PackageParcel(px)));
+            return Ok(parcels.Select(px => new PackageParcel(px)));
         }
 
         [HttpGet("parcels/{pid:Guid}/acq")]
-        public async Task<IActionResult> GetUnitParcels(Guid pid)
+        public async Task<ActionResult<IEnumerable<PackageParcel>>> GetUnitParcels(Guid pid)
         {
             var p = await _ctx.Parcel.FindAsync(pid);
             if (p == null)
@@ -34,7 +35,7 @@ namespace ROWM.Controllers
 
             var parcels = await _ctx.Parcel.Where(px => px.Tracking_Number == p.Tracking_Number).ToArrayAsync();
 
-            return new JsonResult(parcels.Select(px => new PackageParcel(px)));
+            return Ok(parcels.Select(px => new PackageParcel(px)));
         }
     }
 

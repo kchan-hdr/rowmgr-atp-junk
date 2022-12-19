@@ -17,14 +17,15 @@ namespace ROWM.Controllers
     public class OwnerController : ControllerBase
     {
         readonly OwnerRepository _repo;
-        public OwnerController(OwnerRepository r) => (_repo) = (r);
+        readonly IOwnershipHelper _helper;
+        public OwnerController(OwnerRepository r, IOwnershipHelper h) => (_repo, _helper) = (r,h);
 
         [Route("owners/{id:Guid}"), HttpGet]
         public async Task<OwnerDto2> GetOwner(Guid id) => new OwnerDto2(await _repo.GetOwner(id));
 
         [HttpGet("owners", Name ="All Owners")]
-        public async Task<IEnumerable<OwnerDto2>> AllOwners([FromServices] IOwnershipHelper h) =>
-            (await h.AllOwners()).Select(ox => new OwnerDto2(ox));
+        public async Task<IEnumerable<OwnerDto2>> AllOwners() =>
+            (await _helper.AllOwners()).Select(ox => new OwnerDto2(ox));
 
         [HttpGet("owners/{name}", Name = "Find Owners")]
         public async Task<IEnumerable<OwnerDto2>> FindOwner(string name) =>
@@ -32,7 +33,13 @@ namespace ROWM.Controllers
 
 
         [HttpPost("owners")]
-        public async Task<ActionResult<OwnerDto2>> AddOwner([FromServices] IOwnershipHelper h, [FromBody] OwnershipRequest o)
+        public async Task<ActionResult<OwnerDto2>> AddOwner([FromBody] OwnershipRequest o)
+        {
+            var myLord = await GetOrCreateOwner(o);
+            return Ok(new OwnerDto2(await ChangeOwnerImpl(myLord, o)));
+        }
+
+        async Task<Owner> GetOrCreateOwner(OwnershipRequest o)
         {
             Owner myLord = null;
 
@@ -48,11 +55,11 @@ namespace ROWM.Controllers
 
             //myLord ??= await h.AddOwner(o.Name, o.Address, o.OwnerType);
             if (myLord == null)
-                myLord = await h.AddOwner(o.Name, o.Address, o.OwnerType);
+                myLord = await _helper.AddOwner(o.Name, o.Address, o.OwnerType);
 
-            return Ok(new OwnerDto2(await ChangeOwnerImpl(h, myLord, o)));
+
+            return myLord;
         }
-
 
         [HttpPut("owners/{id:Guid}")]
         public async Task<ActionResult<OwnerDto2>> UpdateOwner(Guid id, [FromBody] OwnerRequest o)
@@ -70,34 +77,54 @@ namespace ROWM.Controllers
         }
 
         [HttpPost("owners/{id:Guid}/parcels")]
-        public async Task<ActionResult<OwnerDto2>> ChangeOwner([FromServices] IOwnershipHelper h, Guid id, [FromBody] OwnershipRequest o)
+        public async Task<ActionResult<OwnerDto2>> ChangeOwner(Guid id, [FromBody] OwnershipRequest o)
         {
-            var owner = await h.GetOwner(id);
+            var owner = await _helper.GetOwner(id);
             if (owner == null)
                 return BadRequest();
 
-            return Ok(new OwnerDto2(await ChangeOwnerImpl(h, owner, o)));
+            return Ok(new OwnerDto2(await ChangeOwnerImpl(owner, o)));
         }
 
-        async Task<Owner> ChangeOwnerImpl(IOwnershipHelper h, Owner owner, OwnershipRequest o)
+        async Task<Owner> ChangeOwnerImpl(Owner owner, OwnershipRequest o)
         {
             var parcels = new List<Guid>();
-            parcels.AddRange(await h.GetParcelsByApn(o.Parcels));
-            parcels.AddRange(await h.GetParcelsByAcquisitionUnit(o.AcquisitionUnits));
+            parcels.AddRange(await _helper.GetParcelsByApn(o.Parcels));
+            parcels.AddRange(await _helper.GetParcelsByAcquisitionUnit(o.AcquisitionUnits));
 
-             return await h.NewOwnership(parcels, owner.OwnerId);
+             return await _helper.NewOwnership(parcels, owner.OwnerId);
         }
 
         [HttpGet("parcels/{pid}/owners")]
-        public async Task<ActionResult<IEnumerable<Ownership>>> GetOwnersForParcel([FromServices] IOwnershipHelper h, string pid)
+        public async Task<ActionResult<IEnumerable<Ownership>>> GetOwnersForParcel(string pid)
         {
             var p = await _repo.GetParcel(pid);
             if (p == null)
                 return BadRequest();
              
-            var ox = await h.GetOwners(p.ParcelId);
+            var ox = await _helper.GetOwners(p.ParcelId);
 
             return Ok(value: ox);
+        }
+
+        /// <summary>
+        /// mostly to maintain the original endpoint. don't expect much useage
+        /// </summary>
+        /// <param name="_docTypes"></param>
+        /// <param name="pid"></param>
+        /// <param name="o"></param>
+        /// <returns></returns>
+        [HttpPost("parcels/{pid}/owners")]
+        public async Task<ActionResult<ParcelGraph>> SetOwner([FromServices] DocTypes _docTypes, string pid, [FromBody] OwnershipRequest o)
+        {
+            var p = await _repo.GetParcel(pid);
+            if (p == null)
+                return BadRequest();
+
+            var myLord = await GetOrCreateOwner(o);
+            await ChangeOwnerImpl(myLord, o);
+
+            return new ParcelGraph(p, _docTypes, await _repo.GetDocumentsForParcel(pid));
         }
     }
 
@@ -112,6 +139,7 @@ namespace ROWM.Controllers
         public IEnumerable<string> Parcels { get; set; }    // optional parcels
     }
 
+    #region more slim-down
     public class OwnerDto2
     {
         public Guid OwnerId { get; set; }
@@ -150,4 +178,5 @@ namespace ROWM.Controllers
             IsRelinquished = o.Ownership_t == (int)Ownership.OwnershipType.Relinquished;
         }
     }
+    #endregion
 }

@@ -38,8 +38,11 @@ namespace ROWM.Dal
             var actives = ActiveParcels(part);
             var np = await actives.CountAsync(px => px.IsActive);
 
-            var owners = actives.SelectMany(px => px.Ownership.Select(ox => ox.OwnerId));
-            var no = await owners.Distinct().CountAsync();
+            var no = await actives
+                .SelectMany(px => px.Ownership.Where(ox => ox.Ownership_t == (int)Ownership.OwnershipType.Primary)
+                .Select(ox => ox.OwnerId))
+                .Distinct()
+                .CountAsync();
 
             return (np, no);
         }
