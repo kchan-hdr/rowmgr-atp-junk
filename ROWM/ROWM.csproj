@@ -13,6 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Controllers\TCadController.cs" />
     <Compile Remove="FileOperation.cs" />
     <Compile Remove="Startup.cs" />
     <Compile Remove="StartupAtc6943.cs" />

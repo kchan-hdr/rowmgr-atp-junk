@@ -282,7 +282,7 @@ namespace ROWM.Controllers
                               ParentCode = s.ParentStatusCode,
                               DisplayOrder = s.DisplayOrder ?? 0, 
                               IsSet = evt != null,
-                              Stage = ( evt?.ActivityDate == null ) ? StatusDto.StageCode.Pending.ToString() : s.IsAbort == true ? StatusDto.StageCode.Aborted.ToString() : StatusDto.StageCode.Completed.ToString(),
+                              Stage = CodeStage(evt, s),
                               ActivityDate = evt?.ActivityDate.UtcDateTime ?? null,
                               StatusAgent = evt?.AgentId ?? null,
                               StatusHistory = evt?.ActivityId ?? null
@@ -328,6 +328,20 @@ namespace ROWM.Controllers
             };
         }
 
+        string CodeStage (StatusActivity evt, Parcel_Status s)
+        {
+            if (evt?.ActivityDate == null)
+                return StatusDto.StageCode.Pending.ToString();
+
+
+            if (true == s.IsComplete)
+                return StatusDto.StageCode.Completed.ToString();
+            if (true == s.IsAbort)
+                return StatusDto.StageCode.Aborted.ToString();
+
+            return StatusDto.StageCode.InProgress.ToString();
+        }
+        
         [HttpGet("status/{milestone}/parcels")]
         public async Task<ActionResult<IEnumerable<ParcelHistory>>> GetParcelsByStatus(string milestone)
         {

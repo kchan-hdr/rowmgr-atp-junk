@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Austin_Costs;
+using Microsoft.AspNetCore.Mvc;
 using ROWM.Dal;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,8 +19,9 @@ namespace ROWM.Controllers
     public class OwnerController : ControllerBase
     {
         readonly OwnerRepository _repo;
+        readonly CostEstimateContext _ctx;
         readonly IOwnershipHelper _helper;
-        public OwnerController(OwnerRepository r, IOwnershipHelper h) => (_repo, _helper) = (r,h);
+        public OwnerController(OwnerRepository r, CostEstimateContext c, IOwnershipHelper h) => (_repo, _ctx, _helper) = (r, c, h);
 
         [Route("owners/{id:Guid}"), HttpGet]
         public async Task<OwnerDto2> GetOwner(Guid id) => new OwnerDto2(await _repo.GetOwner(id));
@@ -42,15 +45,20 @@ namespace ROWM.Controllers
         async Task<Owner> GetOrCreateOwner(OwnershipRequest o)
         {
             Owner myLord = null;
+            if (o.OwnerId.HasValue)
+                myLord = await _helper.GetOwner(o.OwnerId.Value);
 
-            var ow = await _repo.FindOwner(o.Name);
-            if (ow.Any())
+            if (myLord == null)
             {
-                var potential = ow.Where(ox => ox.PartyName.Equals(o.Name, StringComparison.InvariantCultureIgnoreCase));
-                Trace.TraceWarning($"submitting a duplicated user {o.Name}");
+                var ow = await _repo.FindOwner(o.Name);
+                if (ow.Any())
+                {
+                    var potential = ow.Where(ox => ox.PartyName.Equals(o.Name, StringComparison.InvariantCultureIgnoreCase));
+                    Trace.TraceWarning($"submitting a duplicated user {o.Name}");
 
-                // user didn't search
-                myLord = potential.FirstOrDefault();
+                    // user didn't search
+                    myLord = potential.FirstOrDefault();
+                }
             }
 
             //myLord ??= await h.AddOwner(o.Name, o.Address, o.OwnerType);
@@ -92,7 +100,9 @@ namespace ROWM.Controllers
             parcels.AddRange(await _helper.GetParcelsByApn(o.Parcels));
             parcels.AddRange(await _helper.GetParcelsByAcquisitionUnit(o.AcquisitionUnits));
 
-             return await _helper.NewOwnership(parcels, owner.OwnerId);
+            _ = await SplitAcquisitionUnit(o.Parcels);
+
+            return await _helper.NewOwnership(parcels, owner.OwnerId);
         }
 
         [HttpGet("parcels/{pid}/owners")]
@@ -126,10 +136,67 @@ namespace ROWM.Controllers
 
             return new ParcelGraph(p, _docTypes, await _repo.GetDocumentsForParcel(pid));
         }
+
+        ///
+        [HttpGet("parcels/{id}/TCad_Owner")]
+        public async Task<ActionResult<OwnerDto2>> GetOwner([FromServices] ROWM_Context context, [FromServices] OwnerRepository o, string id)
+        {
+            var owners = await context.Database.SqlQuery<string>("SELECT [PartyName] FROM Austin.TCAD_OWNER WHERE [Tracking_Number] = @pid",
+                    new System.Data.SqlClient.SqlParameter("pid", id)
+                ).FirstOrDefaultAsync();
+            if (owners == null)
+                return NotFound();
+
+            var d = await o.FindOwner(owners);
+            if (d == null || !d.Any())
+                return NotFound();
+
+            return Ok(new OwnerDto2(d.First()));
+        }
+
+        #region helper
+        // split acquisition unit
+        async Task<bool> SplitAcquisitionUnit(IEnumerable<string> parcels)
+        {
+            var pid = string.Join(",", parcels.Select(px => $"'{px}'"));
+
+            var query = $"SELECT DISTINCT acq.* FROM [austin].[cost_estimate_parcel] p1 left join [austin].[cost_estimate_parcel] acq ON p1.[Acquisition_Parcel_No] = acq.[Acquisition_Parcel_No] WHERE p1.[TCAD_PROP_ID] in ( {pid})";
+
+            // are all parcels belong to the same unit
+            var acqParcel = _ctx.Database.SqlQuery<AcqParcel>(query);
+            var acqs = await acqParcel.ToArrayAsync();
+
+            if (!acqs.Any())
+                return false;   // not found
+            if (acqs.Select(ax => ax.Acquisition_Parcel_No).Distinct().Count() > 1)
+                return false;   // this is unusual. not supported (changing owners from different acq units
+
+            var unitNumber = acqs.First().Acquisition_Parcel_No;
+            if (acqs.Count() == parcels.Count())
+                return true;
+
+            // do split then
+            var kill = await _ctx.AcquisitionKeys.Where(kx => kx.AcqNo == unitNumber).ToListAsync();
+            foreach(var p in kill)
+            {
+                var nkey = new AcquisitionKey
+                {
+                    AcqNo = p.AcqNo + (parcels.Contains(p.TrackingNumber) ? "_b" : "_a"),
+                    PropId = p.PropId
+                };
+                _ctx.AcquisitionKeys.Add(nkey);
+                _ctx.AcquisitionKeys.Remove(p);
+            }
+
+            return await _ctx.SaveChangesAsync() > 0;
+        }
+
+        #endregion
     }
 
     public class OwnershipRequest 
     {
+        public Guid? OwnerId { get; set; }
         public string Name { get; set; }
         public string Address { get; set; }
         public string OwnerType { get; set; }

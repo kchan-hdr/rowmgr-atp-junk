@@ -177,6 +177,14 @@ namespace ROWM.Dal
             return await GetOwner(ownerId);
         }
 
+        #region private records
+        public class AcqParcel
+        {
+            public string Acquisition_Parcel_No { get; set; }
+            public string TCAD_PROP_ID { get; set; }
+        }
+        #endregion
+
         #region acquisition units
         public Task<Guid[]> GetParcelsByAcquisitionUnit(IEnumerable<string> trackno) => trackno == null ? Task.FromResult(Enumerable.Empty<Guid>().ToArray()) : _ctx.Parcel.Where(px => trackno.Contains(px.Tracking_Number)).Select(px => px.ParcelId).ToArrayAsync();
         public Task<Guid[]> GetParcelsByApn(IEnumerable<string> apn) => apn == null ? Task.FromResult(Enumerable.Empty<Guid>().ToArray()) : _ctx.Parcel.Where(px => apn.Contains(px.Assessor_Parcel_Number)).Select(px => px.ParcelId).ToArrayAsync();
