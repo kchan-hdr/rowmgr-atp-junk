@@ -163,12 +163,12 @@ namespace ROWM.Dal
         }
 
         #region helper
-        private IEnumerable<SubTotal> MakeBaseParcels() => _context.Parcel_Status.Where(px => px.IsActive && (px.ShowInPie??false) && px.Category == "acquisition").OrderBy(px => px.DisplayOrder).Select(px => new SubTotal { Title = px.Code, Caption = px.Description, DomainValue = px.DomainValue.ToString(), Count = 0 }).ToArray();
-        private IEnumerable<SubTotal> MakeBaseRoes() => _context.Parcel_Status.Where(px => px.IsActive && (px.ShowInPie ?? false) && px.Category == "roe").OrderBy(px => px.DisplayOrder).Select(px => new SubTotal { Title = px.Code , Caption = px.Description, DomainValue = px.DomainValue.ToString(), Count = 0 }).ToArray();
-        private IEnumerable<SubTotal> MakeBaseClearances() => _context.Parcel_Status.Where(px => px.IsActive && px.Category == "clearance").OrderBy(px => px.DisplayOrder).Select(px => new SubTotal { Title = px.Code, Caption = px.Description, DomainValue = px.DomainValue.ToString(), Count = 0 }).ToArray();
+        private IEnumerable<SubTotal> MakeBaseParcels() => _context.Parcel_Status.Where(px => (px.ShowInPie??false) && px.Category == "acquisition").OrderBy(px => px.DisplayOrder).Select(px => new SubTotal { Title = px.Code, Caption = px.Description, DomainValue = px.DomainValue.ToString(), Count = 0 }).ToArray();
+        private IEnumerable<SubTotal> MakeBaseRoes() => _context.Parcel_Status.Where(px => (px.ShowInPie ?? false) && px.Category == "roe").OrderBy(px => px.DisplayOrder).Select(px => new SubTotal { Title = px.Code , Caption = px.Description, DomainValue = px.DomainValue.ToString(), Count = 0 }).ToArray();
+        private IEnumerable<SubTotal> MakeBaseClearances() => _context.Parcel_Status.Where(px => (px.ShowInPie ?? false) && px.Category == "clearance").OrderBy(px => px.DisplayOrder).Select(px => new SubTotal { Title = px.Code, Caption = px.Description, DomainValue = px.DomainValue.ToString(), Count = 0 }).ToArray();
 
         private async Task<IEnumerable<SubTotal>> MakeBaseCounts(string cat) =>
-            await _context.Parcel_Status.Where(px => px.IsActive && (px.ShowInPie ?? false) && px.Category == cat)
+            await _context.Parcel_Status.Where(px => (px.ShowInPie ?? false) && px.Category == cat)
                 .OrderBy(px => px.DisplayOrder)
                 .Select(px => new SubTotal { Title = px.Code, Caption = px.Description, DomainValue = px.DomainValue.ToString(), Count = 0 })
                 .ToArrayAsync();
