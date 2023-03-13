@@ -1063,7 +1063,7 @@ namespace ROWM.Controllers
             OwnerType = o.OwnerType;
             OwnershipType = oType;
 
-            OwnedParcel = o.Ownership.Where(ox => ox.Parcel.IsActive && ox.Parcel.IsImpacted).Select(ox => new ParcelHeaderDto(ox));
+            OwnedParcel = o.Ownership.Where(ox => ox.Parcel.IsActive).Select(ox => new ParcelHeaderDto(ox));
             Contacts = o.ContactInfo.Where(cx => !cx.IsDeleted).Select(cx => new ContactInfoDto(cx));
             ContactLogs = o.ContactInfo
                 .Where(cx => cx.ContactLog != null)

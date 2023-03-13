@@ -75,8 +75,14 @@ namespace ROWM
             services.AddScoped<IOwnershipHelper, ParcelOwnershipHelper>();  // ADD
             services.AddScoped<ActionItemNotification.Notification>();
 
-            var feat = new AtpParcel("https://maps-stg.hdrgateway.com/arcgis/rest/services/Texas/ATP_Parcel_FS/FeatureServer");
-            services.AddSingleton<IFeatureUpdate>(feat);
+            services.AddSingleton<IFeatureUpdate>(fac =>
+            {
+                var ctx = fac.GetRequiredService<ROWM_Context>();
+                var lay = ctx.MapConfiguration.FirstOrDefault(mx => mx.IsActive && mx.LayerType == LayerType.Parcel);
+                return (lay == null)
+                    ? new AtpParcel("https://maps-stg.hdrgateway.com/arcgis/rest/services/Texas/ATP_Parcel_FS/FeatureServer")
+                    : new AtpParcel(lay.AgsUrl);
+            });
             services.AddSingleton<IRenderer>(fac =>
             {
                 var ctx = fac.GetRequiredService<ROWM_Context>();

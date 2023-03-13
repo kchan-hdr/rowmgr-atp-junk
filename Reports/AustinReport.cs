@@ -42,10 +42,11 @@ namespace ROWM.Reports
             throw new KeyNotFoundException($"unknown report {code}");
         }
 
+        readonly int[] ActiveProjectParts = new int[] { 1, 2 };
         public IEnumerable<ReportDef> GetReports()
         {
             var parts = _context.ProjectParts
-                .Where(pp => pp.IsActive)
+                .Where(pp => pp.IsActive && ActiveProjectParts.Contains(pp.ProjectPartId))
                 .OrderBy(pp => pp.DisplayOrder)
                 .AsEnumerable()
                 .Select(pp => new ReportDef { Caption = $"{pp.Caption} Community Engagement Report", DisplayOrder = pp.DisplayOrder ?? 0, ReportCode = $"en{pp.ProjectPartId}" })

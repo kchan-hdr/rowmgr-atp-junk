@@ -98,6 +98,8 @@ namespace ROWM.Controllers
         public string Assigned { get; set; }
         public string Action { get; set; }
         public DateTimeOffset? DueDate { get; set; }
+        public DateTimeOffset Created { get; set; }
+        public DateTimeOffset LastModified { get; set; }
         public string StatusCode { get; set; }
 
         public ActionItem_dto() { }
@@ -110,6 +112,8 @@ namespace ROWM.Controllers
             Action = a.Action;
             DueDate = a.DueDate;
             StatusCode = Enum.GetName(typeof(ActionStatus), a.Status);
+            Created = a.Created;
+            LastModified = a.LastModified;
         }
     }
 
