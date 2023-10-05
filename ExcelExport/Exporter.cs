@@ -171,7 +171,21 @@ namespace ExcelExport
         #endregion
 
         #region helpers
-        static protected string GetColumnCode(int c = 0) => ((char)('A' + c)).ToString();   // only up to 24 columns
+        //static protected string GetColumnCode(int c = 0) => ((char)('A' + c)).ToString();   // only up to 24 columns
+        static protected string GetColumnCode(int c = 0)
+        {
+            int n = c;
+            var code = new StringBuilder();
+            while (c > 0)
+            {
+                n = (c - 1) / 26;
+                var b = (c - 1) % 26;
+                code.Insert(0, ((char)('A' + b)));
+                c = n;
+            }
+
+            return code.ToString();
+        }
 
         static protected SpreadsheetDocument MakeDoc(Stream s) => SpreadsheetDocument.Create(s, SpreadsheetDocumentType.Workbook);
 

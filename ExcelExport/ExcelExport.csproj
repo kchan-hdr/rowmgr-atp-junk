@@ -184,6 +184,7 @@
     <Compile Include="ContactListExport.cs" />
     <Compile Include="EngagementExport.cs" />
     <Compile Include="GeneratedClass.cs" />
+    <Compile Include="PreAcquisitionExport.cs" />
     <Compile Include="RgiListExport.cs" />
     <Compile Include="RoeListExport.cs" />
     <Compile Include="DocListExport.cs" />

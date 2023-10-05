@@ -76,6 +76,35 @@ namespace ROWM.Controllers
             return File(payload.Content, payload.Mime, payload.Filename);
         }
 
+        [HttpGet("export/preacq")]
+        public async Task<IActionResult> ExportAtpPreAcquisition(string f, [FromServices] ROWM_Context context)
+        {
+            using (var cmd = context.Database.Connection.CreateCommand())
+            {
+                cmd.CommandText = "SELECT '1' 'a','1' 'b', * FROM ROWM.rpt_pre_acquisition ORDER BY 3";     // the enginer drops the first 2 columns for other reports.
+                cmd.CommandType = System.Data.CommandType.Text;
+                await cmd.Connection.OpenAsync();
+
+                var rd = await cmd.ExecuteReaderAsync();
+
+                var rm = new ReportingMethods();
+                var stream = rm.StandardReport("Pre-Acquisition Report", rd.FieldCount, LogoPath.Value, rd, false);
+                return File(stream
+                        , "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        , $"Pre-Acquisiton Report.xlsx");
+
+                //var dt = new System.Data.DataTable();
+                //dt.Load(rd);
+
+                //var eng = new ExcelExport.PreAcquisitionExport(Enumerable.Empty<string>(), LogoPath.Value);
+                //eng.MyDatatable = dt;
+
+                //var bytes = eng.Export();
+                //return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "pre acquisition.xlsx");
+            }
+        }
+
+
         /// <summary>
         /// support excel only
         /// </summary>
