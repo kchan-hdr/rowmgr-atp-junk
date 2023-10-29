@@ -1,4 +1,5 @@
 ﻿using Austin_Costs;
+using ExpenseTracking.Dal;
 using geographia.ags;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -54,15 +55,17 @@ namespace ROWM
                 c.Database.CommandTimeout = 300;
                 return c;
             });
-            services.AddScoped<CostEstimateContext>(fac =>
-            {
-                return new CostEstimateContext(cs);
-            });
+            services.AddScoped<CostEstimateContext>(fac => new CostEstimateContext(cs));
+            services.AddScoped<RelocationContext>(fac => new RelocationContext(cs));
+            services.AddScoped(fac => new ExpenseContext(cs));
 
 
             services.AddScoped<ROWM.Dal.OwnerRepository>();
             services.AddScoped<ParcelStatusRepository>();
             services.AddScoped<ROWM.Dal.ContactInfoRepository>();
+            services.AddScoped<RelocationRepository>();
+            services.AddScoped<IRelocationCaseOps, RelocationCaseOps>();
+            services.AddScoped<IExpenseTracking, ExpenseTracking_Op>();
             services.AddScoped<IStatisticsRepository, AustinFilteredStatisticsRepository>(); // MOD: 
             services.AddScoped<IActionItemRepository, ActionItemRepository>();
             services.AddScoped<ICostEstimateRepository, CostEstimateRepository>();
