@@ -803,7 +803,7 @@ namespace ROWM.Controllers
         public async Task<IEnumerable<AgentDto>> GetAgents()
         {
             var a = await _repo.GetAgents();
-            return a.Where(ax => ax.IsActive).Select(ax => new AgentDto(ax));
+            return a.Where(ax => ax.IsActive).Select(ax => new AgentDto(ax.AgentId, ax.AgentName));
         }
         #endregion
         #region statistics
@@ -941,6 +941,9 @@ namespace ROWM.Controllers
         public string AgentName { get; set; }
         public IEnumerable<ContactLogDto> ContactsLog { get; set; }
         public IEnumerable<DocumentHeader> Documents { get; set; }
+
+        // shortcut for performance
+        internal AgentDto(Guid id, string name) => (AgentId, AgentName) = (id, name);
 
         internal AgentDto(Agent a)
         {
