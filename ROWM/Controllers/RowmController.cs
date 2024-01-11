@@ -179,10 +179,10 @@ namespace ROWM.Controllers
         }
 
         [HttpDelete("contacts/{cid:Guid}")]
-        public async Task<IActionResult> DeleteContact(Guid cid)
+        public async Task<ActionResult> DeleteContact(Guid cid)
         {
             if (await _delete.DeleteContact(cid, User.Identity.Name))
-                return Ok();
+                return Ok(cid);
             else
                 return BadRequest();
         }
@@ -282,7 +282,7 @@ namespace ROWM.Controllers
                               ParentCode = s.ParentStatusCode,
                               DisplayOrder = s.DisplayOrder ?? 0, 
                               IsSet = evt != null,
-                              Stage = ( evt?.ActivityDate == null ) ? StatusDto.StageCode.Pending.ToString() : s.IsAbort == true ? StatusDto.StageCode.Aborted.ToString() : StatusDto.StageCode.Completed.ToString(),
+                              Stage = CodeStage(evt, s),
                               ActivityDate = evt?.ActivityDate.UtcDateTime ?? null,
                               StatusAgent = evt?.AgentId ?? null,
                               StatusHistory = evt?.ActivityId ?? null
@@ -328,6 +328,20 @@ namespace ROWM.Controllers
             };
         }
 
+        string CodeStage (StatusActivity evt, Parcel_Status s)
+        {
+            if (evt?.ActivityDate == null)
+                return StatusDto.StageCode.Pending.ToString();
+
+
+            if (true == s.IsComplete)
+                return StatusDto.StageCode.Completed.ToString();
+            if (true == s.IsAbort)
+                return StatusDto.StageCode.Aborted.ToString();
+
+            return StatusDto.StageCode.InProgress.ToString();
+        }
+        
         [HttpGet("status/{milestone}/parcels")]
         public async Task<ActionResult<IEnumerable<ParcelHistory>>> GetParcelsByStatus(string milestone)
         {
@@ -610,9 +624,11 @@ namespace ROWM.Controllers
             };
 
             var log = await _repo.AddContactLog(myParcels, logRequest.ContactIds, l);
-            
-            var ptasks = myParcels.Select(px =>  _repo.GetParcel(px));
-            _statusUpdate.myParcels = await Task.WhenAll(ptasks);
+
+            var pxs = await _repo.GetParcels(myParcels);
+            _statusUpdate.myParcels = pxs;
+            //var ptasks = myParcels.Select(px => _repo.GetParcel(px));
+            //_statusUpdate.myParcels = await Task.WhenAll(ptasks);
             _statusUpdate.myAgent = a;
             _statusUpdate.StatusChangeDate = logRequest.DateAdded;
             await _statusUpdate.Apply();
@@ -710,10 +726,10 @@ namespace ROWM.Controllers
         }
 
         [HttpDelete("contactLogs/{lid:Guid}")]
-        public async Task<IActionResult> DeleteContactLog(Guid lid)
+        public async Task<ActionResult> DeleteContactLog(Guid lid)
         {
             if (await _delete.DeleteContactLog(lid, User.Identity.Name))
-                return Ok();
+                return Ok(lid);
             else
                 return BadRequest();
         }
@@ -1047,7 +1063,7 @@ namespace ROWM.Controllers
             OwnerType = o.OwnerType;
             OwnershipType = oType;
 
-            OwnedParcel = o.Ownership.Where(ox => ox.Parcel.IsActive && ox.Parcel.IsImpacted).Select(ox => new ParcelHeaderDto(ox));
+            OwnedParcel = o.Ownership.Where(ox => ox.Parcel.IsActive).Select(ox => new ParcelHeaderDto(ox));
             Contacts = o.ContactInfo.Where(cx => !cx.IsDeleted).Select(cx => new ContactInfoDto(cx));
             ContactLogs = o.ContactInfo
                 .Where(cx => cx.ContactLog != null)
@@ -1211,7 +1227,7 @@ namespace ROWM.Controllers
             FinalOptionOffer = OfferHelper.MakeCompensation(p, "FinalOption");
             FinalROEOffer = OfferHelper.MakeCompensation(p, "FinalROE");
 
-            Owners = (p.Ownership.Any()) ? p.Ownership.Select(ox => new OwnerDto(ox.Owner, ox.Ownership_t))
+            Owners = (p.Ownership.Any()) ? p.Ownership.Where(ox => ox.IsCurrentOwner).Select(ox => new OwnerDto(ox.Owner, ox.Ownership_t))
                 // data issue. not common
                 : new List<OwnerDto> { new OwnerDto(
                     new Owner { OwnerId = Guid.Empty, PartyName = "Owner Unknwon",

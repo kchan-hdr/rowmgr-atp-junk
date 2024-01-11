@@ -1,18 +1,17 @@
 ﻿using geographia.ags;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ROWM.Dal;
 using SharePointInterface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace ROWM.Controllers
 {
     [Produces("application/json")]
-    public class VocabularyController
+    [ApiController]
+    public class VocabularyController : ControllerBase
     {
         private readonly ROWM_Context _Context;
         private readonly AppRepository _repo;

@@ -340,6 +340,45 @@ namespace ROWM.Controllers
             var bytes = e.Export();
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "outreach.xlsx");
         }
+
+        #region atp reports
+        [HttpGet("export/atp_roe")]
+        public async Task<IActionResult> ExportAtpRoe([FromServices] ROWM_Context _ctx, string f)
+        {
+            using (var command = _ctx.Database.Connection.CreateCommand())
+            {
+                command.CommandText = "exec dbo.ROEStatusReport";
+                await _ctx.Database.Connection.OpenAsync();
+                using (var result = command.ExecuteReader())
+                {
+                    var rm = new ReportingMethods();
+                    var stream = rm.StandardReport("ROE Status Report", 15, LogoPath.Value, result, false);
+                    return File(stream
+                            , "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            , $"ROE Status Report.xlsx");
+                }
+            }
+        }
+
+        [HttpGet("export/atp_all_fields")]
+        public async Task<IActionResult> ExportAtpAllMeta([FromServices] ROWM_Context _ctx, string f)
+        {
+            using (var command = _ctx.Database.Connection.CreateCommand())
+            {
+                command.CommandText = "exec dbo.AllFieldsReport";
+                await _ctx.Database.Connection.OpenAsync();
+                using (var result = command.ExecuteReader())
+                {
+                    var rm = new ReportingMethods();
+                    var stream = rm.StandardReport("All Fields Report", 100, LogoPath.Value, result, true);
+                    return File(stream
+                            , "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            , $"All Fields Report.xlsx");
+                }
+            }
+        }
+        #endregion
+
         #region logo image
         string GetLogo()
         {

@@ -150,11 +150,13 @@
     <Compile Include="Repesentation_Type.cs" />
     <Compile Include="Repository\ActionItemRepository.cs" />
     <Compile Include="Repository\AppRepository.cs" />
+    <Compile Include="Repository\AustinFilteredStatisticsRepository.cs" />
     <Compile Include="Repository\ContactInfoRepository.cs" />
     <Compile Include="Repository\DeleteHelper.cs" />
     <Compile Include="Repository\FilteredStatisticsRepository.cs" />
     <Compile Include="Repository\IStatisticsRepository.cs" />
     <Compile Include="Repository\OwnerRepository.cs" />
+    <Compile Include="Repository\ParcelOwnershipHelper.cs" />
     <Compile Include="Repository\ParcelStatusRepository.cs" />
     <Compile Include="Repository\StatisticsRepository.cs" />
     <Compile Include="RoeCondition.cs" />

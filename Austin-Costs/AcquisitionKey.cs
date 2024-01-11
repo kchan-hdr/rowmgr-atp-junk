@@ -8,10 +8,10 @@ namespace Austin_Costs
     public class AcquisitionKey
     {
         [Key, Column("Acquisition_Parcel_No", Order =1)]
-        public string AcqNo { get; private set; }
+        public string AcqNo { get; set; }
 
         [Key, Column("TCAD_PROP_ID", Order =2)]
-        public string PropId { get; private set; }
+        public string PropId { get; set; }
 
 
         //[ForeignKey(nameof(AcqNo))]

@@ -2,11 +2,68 @@
 using ROWM.Controllers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace ROWM.Dal
 {
+    public class UpdateParcelStatus_austin2 : UpdateParcelStatus_austin
+    {
+        public UpdateParcelStatus_austin2(ROWM_Context c, IParcelStatusHelper h, IFeatureUpdate f) : base(c, h, f) { }
+
+
+        // override. Testing "document" trigger status
+        protected override async Task<bool> Apply(Parcel p)
+        {
+            var myStatus = _ctx.Parcel_Status.SingleOrDefault(ps => ps.Code == AcquisitionStatus);
+            if (myStatus is null)
+            {
+                Trace.TraceWarning($"bad status code {AcquisitionStatus}");
+                return false;
+            }
+
+            var lastAct = p.Activities.OrderByDescending(ax => ax.ActivityDate).FirstOrDefault()?.StatusCode ?? string.Empty;
+            p.Activities.Add(new StatusActivity
+            {
+                ActivityDate = StatusChangeDate,
+                OriginalStatusCode = lastAct,
+                StatusCode = AcquisitionStatus,
+                Notes = Notes,
+                ParentParcel = p,
+                Agent = myAgent
+            });
+
+            var dv = _statusHelper.GetDomainValue(AcquisitionStatus);
+
+            switch ( myStatus.Category) 
+            {
+                case "acquisition":
+                    p.ParcelStatusCode = AcquisitionStatus;
+                    await _featureUpdate.UpdateFeature(p.Assessor_Parcel_Number, p.Tracking_Number, dv);
+                    break;
+                case "roe":
+                    p.RoeStatusCode = AcquisitionStatus;
+                    await _featureUpdate.UpdateFeatureRoe(p.Assessor_Parcel_Number, p.Tracking_Number, dv);
+                    break;
+                case "engagement":
+                    p.OutreachStatusCode = AcquisitionStatus;
+                    await _featureUpdate.UpdateFeatureOutreach(p.Assessor_Parcel_Number, p.Tracking_Number, dv, string.Empty, default);
+                    break;
+                default:
+                    Trace.TraceWarning($"unknow status category {myStatus.Code} {myStatus.Category}");
+                    break;
+            }
+
+            if (_ctx.Entry(p).State == System.Data.Entity.EntityState.Detached)
+                _ctx.Entry(p).State = System.Data.Entity.EntityState.Modified;
+
+            var touched = await _ctx.SaveChangesAsync();
+            return touched > 0;
+        }
+    }
+
+
     public class UpdateParcelStatus_austin : IUpdateParcelStatus
     {
         public Agent myAgent { get; set; }
@@ -18,9 +75,9 @@ namespace ROWM.Dal
         public string Notes { get; set; }
         public string ModifiedBy { get; set; } = "UP";
 
-        readonly ROWM_Context _ctx;
-        readonly IParcelStatusHelper _statusHelper;
-        readonly IFeatureUpdate _featureUpdate;
+        protected readonly ROWM_Context _ctx;
+        protected readonly IParcelStatusHelper _statusHelper;
+        protected readonly IFeatureUpdate _featureUpdate;
         public UpdateParcelStatus_austin(ROWM_Context c, IParcelStatusHelper h, IFeatureUpdate f) => (_ctx, _statusHelper, _featureUpdate) = (c, h, f);
 
         public async Task<int> Apply()
@@ -44,7 +101,7 @@ namespace ROWM.Dal
         }
 
         // apply to each parcel
-        async Task<bool> Apply(Parcel p) =>
+        protected virtual async Task<bool> Apply(Parcel p) =>
             await HandleEngagement(p) || await HandleRoe (p);
 
         async Task<bool> HandleEngagement(Parcel p)

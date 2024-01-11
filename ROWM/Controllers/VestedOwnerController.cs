@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace ROWM.Controllers
 {
+    /// <summary>
+    /// seperated vested owner feature onhold. may be withdrawn
+    /// </summary>
     [ApiController]
     [Route("api/v2")]
     public class VestedOwnerController : ControllerBase
@@ -19,14 +22,13 @@ namespace ROWM.Controllers
         public VestedOwnerController(ROWM_Context c, OwnerRepository o) => (_ctx, _repo) = (c, o);
         #endregion
         [HttpGet("acqUnits/{tractNo}/vested"), ActionName(nameof(GetVestedOwner))]
-        [ProducesDefaultResponseTypeAttribute(typeof(IEnumerable<Vested_dto>))]
-        public async Task<IActionResult> GetVestedOwner(string tractNo)
+        public async Task<ActionResult<IEnumerable<Vested_dto>>> GetVestedOwner(string tractNo)
         {
             var owners = await _ctx.VestedOwner.Where(vx => vx.TrackingNumber.Equals(tractNo)).ToArrayAsync();
             if (!(owners?.Any() ?? false))
                 return new JsonResult(Enumerable.Empty<Vested_dto>()); // NotFound($"no vested owner for parcel <{tractNo}>");
 
-            return new JsonResult(owners.Select(o => new Vested_dto(o, Url)));
+            return Ok(owners.Select(o => new Vested_dto(o, Url)));
         }
 
         [HttpPost("acqUnits/{tractNo}/vested")]

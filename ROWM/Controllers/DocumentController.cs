@@ -59,10 +59,10 @@ namespace ROWM.Controllers
         public DocumentInfo GetDocument(Guid docId) => new DocumentInfo(_repo.GetDocument(docId), _docTypes);
 
         [HttpDelete("api/documents/{docId:Guid}")]
-        public async Task<IActionResult> DeleteDocument(Guid docId)
+        public async Task<ActionResult> DeleteDocument(Guid docId)
         {
             if (await _deleteHelper.DeleteDocument(docId, User.Identity.Name))
-                return Ok();
+                return Ok(docId);
             else
                 return BadRequest();
         }
@@ -506,6 +506,10 @@ namespace ROWM.Controllers
         public DateTimeOffset Created { get; set; }
         public DateTimeOffset LastModified { get; set; }
 
+        public DateTimeOffset DateUploaded { get => this.Created; }
+        public string ContentType { get; set; }
+        public int ContentLength { get; set; }
+
         /// <summary>
         /// default ctor
         /// </summary>
@@ -520,7 +524,8 @@ namespace ROWM.Controllers
             Created = d.Created;
             LastModified = d.LastModified;
 
-
+            ContentType = d.ContentType;
+            ContentLength = int.Parse(d.CheckNo);
             //AgentName = d.Agents.FirstOrDefault()?.AgentName ?? "";
         }
     }

@@ -89,6 +89,35 @@ namespace geographia.ags
             return default;
         }
 
+        public virtual async Task<(IEnumerable<int>, string)> Find_Ex(int layerId, string query)
+        {
+            if (layerId < 0)
+                throw new ArgumentNullException(nameof(layerId));
+
+            if (string.IsNullOrWhiteSpace(query))
+                throw new ArgumentNullException(nameof(query));
+
+            var q = await AppendToken($"{_URL}/{layerId}/query?returnGeometry=fale&returnIdsOnly=true&f=json&where={query}");
+            var response = await _Client.GetStringAsync(q);
+            var r = JObject.Parse(response);
+
+            if (!r.TryGetValue("objectIdFieldName", out var fieldname))
+            {
+                Trace.TraceWarning("missing OID field name");
+            }
+
+            //var idx = r["objectIds"];
+            var idx = CheckError(r, "objectIds");
+            if (idx.Type == JTokenType.Array)
+            {
+                var ids = (JArray)idx;
+                return (ids.Select<JToken, int>(id => id.Value<int>()), fieldname.Value<string>());
+            }
+
+            return default;
+            //throw new KeyNotFoundException(query);
+        }
+
         public virtual async Task<IEnumerable<T>> GetAll<T>(string query, Func<JArray, IEnumerable<T>> parser)
         {
             if (parser == null)

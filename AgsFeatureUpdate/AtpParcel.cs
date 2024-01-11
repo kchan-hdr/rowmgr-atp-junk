@@ -182,6 +182,48 @@ namespace geographia.ags
             });
         }
 
+        #region dynamic update
+        public async Task<bool> UpdateFeature_Ex(string parcelId, Dictionary<string, dynamic> attr)
+        {
+            if (string.IsNullOrEmpty(parcelId))
+                throw new ArgumentNullException(nameof(parcelId));
+
+            if (attr == null || !attr.Any())
+                throw new ArgumentNullException(nameof(attr));
+
+            var (oid, oidf) = await Find_Ex(_LAYERID, $"{_PARCEL_KEY}='{parcelId}'");
+            if (oid == null || !oid.Any())
+                return false;
+
+            var tasks = oid.Select(i =>
+            {
+                var rex = new UpdateFeature2 { ObjectIdFild = oidf, OId = i };
+                foreach (var a in attr)
+                    rex.Attributes.Add(a.Key, a.Value);
+                var req = new StringContent(rex.Make());
+                req.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/x-www-form-urlencoded");
+                return base.Update(_LAYERID, req);
+            });
+
+            var res = await Task.WhenAll(tasks);
+            return res.All(r => r);
+        }
+
+        public class UpdateFeature2
+        {
+            public string ObjectIdFild { get; set; } = "OBJECTID";
+            public int OId { get; set; }
+            public Dictionary<string, dynamic> Attributes { get; private set; } = new Dictionary<string, dynamic>();
+
+            public string Make()
+            {
+                this.Attributes.Add(this.ObjectIdFild, this.OId);
+                var req = JsonConvert.SerializeObject(this.Attributes);
+                return $"features=[{{\"attributes\":{req}}}]&f=json&gdbVersion=&rollbackOnFailure=true";
+            }
+        }
+        #endregion
+
         #region request
         public class UpdateRequest
         {

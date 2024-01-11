@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Data;
-using System.Diagnostics;
 using System.Data.Entity;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ROWM.Dal
 {
@@ -38,6 +37,48 @@ namespace ROWM.Dal
 
         public async Task<IEnumerable<Owner>> FindOwner(string name)
         {
+            var q = from owner in ActiveOwners()
+                    where owner.PartyName.Contains(name)
+                    select new
+                    {
+                        owner.OwnerId,
+                        owner.OwnerAddress,
+                        owner.PartyName,
+                        owner.OwnerType,
+                        Ownershp = owner.Ownership.Select(ox => new
+                        {
+                            ox.Ownership_t,
+                            Parcel = new
+                            {
+                                ox.Parcel.ParcelId,
+                                ox.Parcel.Assessor_Parcel_Number,
+                                ox.Parcel.Tracking_Number
+                            }
+                        })
+                    };
+            
+            return (await q.ToArrayAsync())
+                    .Select(ox => new Owner
+                    {
+                        OwnerId = ox.OwnerId,
+                        OwnerAddress = ox.OwnerAddress,
+                        PartyName = ox.PartyName,
+                        OwnerType = ox.OwnerType,
+                        Ownership = ox.Ownershp.Select(osx => new Ownership
+                        {
+                            Ownership_t = osx.Ownership_t,
+                            Parcel = new Parcel
+                            {
+                                ParcelId = osx.Parcel.ParcelId,
+                                Assessor_Parcel_Number = osx.Parcel.Assessor_Parcel_Number,
+                                Tracking_Number = osx.Parcel.Tracking_Number
+                            }
+                        }).ToArray()
+                    });
+        }
+
+        public async Task<IEnumerable<Owner>> FindOwner_(string name)
+        {
             return await ActiveOwners()
                 .Include(ox => ox.ContactInfo)
                 .Include(ox => ox.ContactInfo.Select(ocx => ocx.ContactLog))
@@ -55,6 +96,15 @@ namespace ROWM.Dal
 
             return p;
         }
+
+        public Task<Parcel[]> GetParcels(IEnumerable<string> pids) =>
+            ActiveParcels()
+                .Include(px => px.Ownership.Select(o => o.Owner.ContactLog))
+                .Include(px => px.ContactLog)
+                .Include(px => px.ActionItems)
+                .Where(px => pids.Contains(px.Tracking_Number))
+                .ToArrayAsync();
+
         public async Task<List<Document>> GetDocumentsForParcel(string pid)
         {
             var p = await ActiveParcels().FirstOrDefaultAsync(px => px.Tracking_Number.Equals(pid));
@@ -71,7 +121,10 @@ namespace ROWM.Dal
                 DateRecorded = dx.DateRecorded,
                 Created = dx.Created,
                 LastModified = dx.LastModified,
-                IsDeleted = dx.IsDeleted
+                IsDeleted = dx.IsDeleted,
+
+                ContentType = dx.ContentType,
+                CheckNo = dx.Content?.Length.ToString() ?? "0"
             });
 
             return query.ToList();
@@ -489,7 +542,7 @@ namespace ROWM.Dal
             {
                 foreach (var pid in deletedPids)
                 {
-                    var px = await _ctx.Parcel.SingleOrDefaultAsync(pxid => pxid.ParcelId.Equals(pid));
+                    var px = await _ctx.Parcel.SingleOrDefaultAsync(pxid => pxid.Tracking_Number.Equals(pid));
                     if (px == null)
                     {
                         Trace.TraceWarning($"invalid parcel {pid}");
