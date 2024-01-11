@@ -8,6 +8,6 @@ namespace com.hdr.rowmgr.Relocation
         Guid ParcelId { get; }
         IEnumerable<IRelocationCase> RelocationCases { get; }
 
-        IRelocationCase AddCase(string displaceeName, RelocationStatus eligibility, DisplaceeType displaceeType, RelocationType reloType, FinancialAssistType finAssisType, double finAssisAmount);
+        IRelocationCase AddCase(string displaceeName, RelocationStatus eligibility, DisplaceeType displaceeType, RelocationType reloType, FinancialAssistType finAssistType, double finAssistAmount);
     }
 }

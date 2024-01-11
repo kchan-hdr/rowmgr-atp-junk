@@ -27,8 +27,7 @@ namespace ROWM.Dal
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             modelBuilder.Entity<ParcelRelocation>()
-                .HasRequired(r => r.Parcel);
-            
+                .HasRequired(r => r.Parcel);        
                 
             modelBuilder.Entity<RelocationCase>()
                 .HasMany(rx => rx.Logs)
@@ -45,8 +44,51 @@ namespace ROWM.Dal
                 .Map(cx => {
                     cx.MapLeftKey("RelocationCaseId");
                     cx.MapRightKey("DocumentId");
-                    cx.ToTable("Relocation_Case_Document", "Austin");
+                    cx.ToTable("Relocation_Case_Documents", "Austin");
                 });
+
+
+            #region override mapping conventions
+            modelBuilder.Entity<Agent>()
+                .HasMany(e => e.ContactLog)
+                .WithRequired(e => e.Agent)
+                .HasForeignKey(e => e.ContactAgentId);
+
+            modelBuilder.Entity<ContactLog>()
+                .HasMany(e => e.Parcel)
+                .WithMany(e => e.ContactLog)
+                .Map(m => m.ToTable("ParcelContactLogs", "ROWM"));
+
+            modelBuilder.Entity<Owner>()
+                .HasMany(e => e.ContactLog)
+                .WithOptional(e => e.Owner)
+                .HasForeignKey(e => e.Owner_OwnerId);
+
+            modelBuilder.Entity<Document>()
+                .HasMany(e => e.DocumentActivity)
+                .WithOptional(e => e.Document)
+                .HasForeignKey(e => e.ChildDocumentId);
+
+            modelBuilder.Entity<Document>()
+                .HasMany(e => e.DocumentActivity1)
+                .WithRequired(e => e.Document1)
+                .HasForeignKey(e => e.ParentDocumentId);
+
+            modelBuilder.Entity<Document>()
+                .HasMany(e => e.Owner)
+                .WithMany(e => e.Document)
+                .Map(m => m.ToTable("OwnerDocuments", "ROWM"));
+
+            modelBuilder.Entity<Document>()
+                .HasMany(e => e.Parcel)
+                .WithMany(e => e.Document)
+                .Map(m => m.ToTable("ParcelDocuments", "ROWM"));
+
+            modelBuilder.Entity<DocumentPackage>()
+                .HasMany(e => e.Document)
+                .WithOptional(e => e.DocumentPackage)
+                .HasForeignKey(e => e.DocumentPackage_PackageId);
+            #endregion
         }
     }
 }
