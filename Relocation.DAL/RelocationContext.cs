@@ -1,5 +1,4 @@
-﻿using Relocation.DAL;
-using System.Data.Entity;
+﻿using System.Data.Entity;
 
 namespace ROWM.Dal
 {

@@ -31,7 +31,7 @@ namespace ROWM.Dal
 
         public async Task<IEnumerable<IRelocationCase>> GetRelocationForParcel(Guid parcelId)
         {
-            var q = from r in _context.Relocations
+            var q = from r in _context.Relocations.Include(pr => pr.Cases).AsNoTracking()
                     where r.ParcelId == parcelId
                     select r.Cases.Select(c => new
                     {
@@ -45,7 +45,10 @@ namespace ROWM.Dal
                     });
 
             var rr = await q.FirstOrDefaultAsync();
-            var relx = rr.Select(r =>
+            if (rr is null || rr.Count() <= 0)
+                return Array.Empty<RelocationCase>();
+
+            var relx = rr?.Select(r =>
             {
                 var rx = new RelocationCase
                 {
@@ -66,6 +69,7 @@ namespace ROWM.Dal
         }
 
         public async Task<IRelocationCase> GetRelocationCase(Guid caseId) => await _context.RelocationCases.FindAsync(caseId);
+        public async Task<RelocationCase> GetRelocationCaseWithLogs(Guid caseId) => await _context.RelocationCases.Include(rc => rc.Logs).FirstOrDefaultAsync(rc => rc.RelocationCaseId == caseId);
 
         internal ParcelRelocation MakeNewRelocation => _context.Relocations.Add(new ParcelRelocation());
 

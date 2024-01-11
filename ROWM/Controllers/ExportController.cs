@@ -63,6 +63,54 @@ namespace ROWM.Controllers
         }
         #endregion
 
+
+        [Route("parcels/{pid}/logs"), HttpGet]
+        public async Task<IActionResult> ExportContactLogs(string pid, [FromServices] SiteDecoration _decoration)
+        {
+            if (string.IsNullOrWhiteSpace(pid))
+                return BadRequest();
+
+            var p = await _repo.GetParcel(pid);
+            var o = await _repo.GetOwner(p.Ownership.FirstOrDefault()?.OwnerId ?? default);
+            p.ParcelContacts = o?.ContactInfo;
+
+            var h = new Models.ContactLogHelper(_decoration.SiteTitle());
+            var docx = await h.GeterateImpl(p);
+
+            return File(docx, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", $"{pid} Agent Log.docx");
+        }
+
+        [Route("parcels/{pid}/relocations/{rcid}/logs"), HttpGet]
+        public async Task<IActionResult> ExportDisplaceeContactLogs(string pid, Guid rcid, [FromServices] SiteDecoration _decoration, [FromServices] RelocationRepository _relorepo)
+        {
+            if (string.IsNullOrWhiteSpace(pid) || rcid == Guid.Empty)
+                return BadRequest();
+
+            var p = await _repo.GetParcel(pid);
+            var rc = await _relorepo.GetRelocationCaseWithLogs(rcid);
+            var o = await _repo.GetOwner(p.Ownership.FirstOrDefault()?.OwnerId ?? default);
+            p.ParcelContacts = o?.ContactInfo;
+
+            var h = new Models.ContactLogHelper(_decoration.SiteTitle());
+            var docx = await h.GeterateImpl(p, rc);
+
+            return File(docx, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", $"{rcid} Agent Log.docx");
+        }
+
+        [Route("parcels/{pid}/offerPackage"), HttpGet]
+        public async Task<IActionResult> ExportOfferPackage(string pid, [FromServices] SiteDecoration _decoration)
+        {
+            if (string.IsNullOrWhiteSpace(pid))
+                return BadRequest();
+
+            var p = await _repo.GetParcel(pid);
+
+            var h = new Models.EasementOfferHelper();
+            var docx = await h.GeneratePackage(p);
+
+            return File(docx, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", $"{pid} Easement Offer Package.docx");
+        }
+
         [HttpGet("export/contactlog/{parcelId}")]
         [ProducesDefaultResponseType(typeof(File))]
         public async Task<IActionResult> ContactLogByParcel(string parcelId)

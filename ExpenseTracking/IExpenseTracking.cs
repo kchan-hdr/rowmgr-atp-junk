@@ -24,12 +24,12 @@ namespace ExpenseTracking.Dal
 
         Task<IEnumerable<ExpenseHeaderDto>> GetExpensesByType(string parcelTCAD, string expenseType); //Get a list of expense for a paticular expense type for a parcel
 
-        Task<double> CalculateExpenseByType(string parcelTCAD, string expenseType);//Type total expense
+        Task<decimal> CalculateExpenseByType(string parcelTCAD, string expenseType);//Type total expense
 
-        Task<double> CalculateExpenseByRelocationCase(Guid relocationCaseId);//Relo case total expense
+        Task<decimal> CalculateExpenseByRelocationCase(Guid relocationCaseId);//Relo case total expense
 
-        Task<double> CalculateExpenseByParcel(string parcelTCAD); //Parcel total expense
-        Task<double> CalculateReloExpenseByParcel(string parcelTCAD);
+        Task<decimal> CalculateExpenseByParcel(string parcelTCAD); //Parcel total expense
+        Task<decimal> CalculateReloExpenseByParcel(string parcelTCAD);
     }
 
     public class ExpenseTracking_NoOp : IExpenseTracking
@@ -69,21 +69,21 @@ namespace ExpenseTracking.Dal
             throw new NotImplementedException("GetExpensesByType is not implemented.");
         }
 
-        public Task<double> CalculateExpenseByType(string parcelTCAD, string expenseType)
+        public Task<decimal> CalculateExpenseByType(string parcelTCAD, string expenseType)
         {
             throw new NotImplementedException("CalculateExpenseByType is not implemented.");
         }
 
-        public Task<double> CalculateExpenseByRelocationCase(Guid relocationCaseId)
+        public Task<decimal> CalculateExpenseByRelocationCase(Guid relocationCaseId)
         {
             throw new NotImplementedException("CalculateExpenseByRelocationCase is not implemented.");
         }
 
-        public Task<double> CalculateExpenseByParcel(string parcelTCAD)
+        public Task<decimal> CalculateExpenseByParcel(string parcelTCAD)
         {
             throw new NotImplementedException("CalculateExpenseByParcel is not implemented.");
         }
-        public Task<double> CalculateReloExpenseByParcel(string parcelTCAD)
+        public Task<decimal> CalculateReloExpenseByParcel(string parcelTCAD)
         {
             throw new NotImplementedException("CalculateExpenseByParcel is not implemented.");
         }

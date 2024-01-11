@@ -11,7 +11,7 @@ namespace ExpenseTracking.Dal.Entities.Dtos
 
         public string ExpenseTitle { get; set; }
 
-        public double? ExpenseAmount { get; set; }
+        public decimal? ExpenseAmount { get; set; }
 
         public string Notes { get; set; }
 

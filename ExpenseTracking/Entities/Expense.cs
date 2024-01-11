@@ -20,7 +20,7 @@ namespace ExpenseTracking.Dal.Entities
         [StringLength(100)]
         public string ExpenseTitle { get; set; }
 
-        public double ExpenseAmount { get; set; }
+        public decimal ExpenseAmount { get; set; } = 0;
 
         public string Notes { get; set; }
 

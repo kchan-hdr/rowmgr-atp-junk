@@ -283,12 +283,12 @@ namespace ROWM.Controllers
     {
         public string ActivityCode { get; set; }
         public DisplaceeActivity Activity { get; set; }
-        public string? Description { get; set; }
+        public string Description { get; set; }
 
         [DefaultValue("161DED15-9122-47CF-9A11-4139C3FF5C05")]
         public Guid AgentId { get; set; }
         public DateTimeOffset ActivityDate { get; set; }
-        public string? Notes { get; set; }
+        public string Notes { get; set; }
         public int? Money { get; set; }
         public bool? YesNo { get; set; }
     }

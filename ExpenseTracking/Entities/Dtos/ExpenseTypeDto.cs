@@ -15,7 +15,7 @@ namespace ExpenseTracking.Dal.Entities.Dtos
 
         public int? DisplayOrder { get; set; }
 
-        public double? TotalExpenseAmount { get; set; }
+        public decimal? TotalExpenseAmount { get; set; }
 
         public int TotalExpenseCount { get; set; }
 
@@ -25,7 +25,7 @@ namespace ExpenseTracking.Dal.Entities.Dtos
 
         public ExpenseTypeDto() { }
 
-        public ExpenseTypeDto(ExpenseType expenseType, IEnumerable<ExpenseHeaderDto> selectedExpenses, double totalExpenseAmount, int totalExpenseCount)
+        public ExpenseTypeDto(ExpenseType expenseType, IEnumerable<ExpenseHeaderDto> selectedExpenses, decimal totalExpenseAmount, int totalExpenseCount)
         {
             ExpenseTypeName = expenseType.ExpenseTypeName;
             ExpenseCategory = expenseType.ExpenseCategoryName;

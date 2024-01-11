@@ -8,7 +8,7 @@ namespace ExpenseTracking.Dal.Entities.Dtos
 
         public string ExpenseTitle { get; set; }
 
-        public double? ExpenseAmount { get; set; }
+        public decimal? ExpenseAmount { get; set; }
 
         public DateTimeOffset? SentDate { get; set; }
 
@@ -22,7 +22,7 @@ namespace ExpenseTracking.Dal.Entities.Dtos
             IsFileAttached = expense.IsFileAttached;
         }
 
-        public ExpenseHeaderDto(Guid expenseId, string expenseTitle, double? expenseAmount, DateTimeOffset? sentDate, bool? isFileAttached)
+        public ExpenseHeaderDto(Guid expenseId, string expenseTitle, decimal? expenseAmount, DateTimeOffset? sentDate, bool? isFileAttached)
         {
             ExpenseId = expenseId;
             ExpenseTitle = expenseTitle;

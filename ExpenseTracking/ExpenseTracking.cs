@@ -82,7 +82,7 @@ namespace ExpenseTracking.Dal
                         select new { expenseType = et, expenses = etx.ToList() };
 
             var myList = await query.OrderBy(et => et.expenseType.DisplayOrder).ToArrayAsync();
-            return myList.Select(t => new ExpenseTypeDto(t.expenseType, t.expenses?.Select(e => new ExpenseHeaderDto(e)) ?? Enumerable.Empty<ExpenseHeaderDto>(), t.expenses?.Sum(e => e.ExpenseAmount) ?? 0, t.expenses?.Count() ?? 0));
+            return myList.Select(t => new ExpenseTypeDto(t.expenseType, t.expenses?.Select(e => new ExpenseHeaderDto(e)) ?? Enumerable.Empty<ExpenseHeaderDto>(), t.expenses?.Sum(e => e.ExpenseAmount) ?? 0M, t.expenses?.Count() ?? 0));
         }
 
         public async Task<IEnumerable<ExpenseTypeDto>> GetExpenses(Guid relocationCaseId, string category)
@@ -168,16 +168,16 @@ namespace ExpenseTracking.Dal
         }
 
         [Obsolete("not used. included in get expense type")]
-        public async Task<double> CalculateExpenseByType(string parcelTCAD, string expenseType)
+        public async Task<decimal> CalculateExpenseByType(string parcelTCAD, string expenseType)
         {
             var expenseHeaderDtos = await GetExpensesByType(parcelTCAD, expenseType);
 
-            double totalExpenseAmount = expenseHeaderDtos.Sum(dto => dto.ExpenseAmount ?? 0.0);
+            var totalExpenseAmount = expenseHeaderDtos.Sum(dto => dto.ExpenseAmount ?? 0.0M);
 
             return totalExpenseAmount;
         }
 
-        public async Task<double> CalculateExpenseByRelocationCase(Guid relocationCaseId)
+        public async Task<decimal> CalculateExpenseByRelocationCase(Guid relocationCaseId)
         {
             if (relocationCaseId == Guid.Empty /*||  more validation conditions (not exist in RelocationCase table)  */)
             {
@@ -197,7 +197,7 @@ namespace ExpenseTracking.Dal
             }
         }
 
-        public async Task<double> CalculateExpenseByParcel(string parcelTCAD)
+        public async Task<decimal> CalculateExpenseByParcel(string parcelTCAD)
         {
             if (string.IsNullOrEmpty(parcelTCAD) /*||  more validation conditions (not exist in Parcel table)  */)
             {
@@ -218,7 +218,7 @@ namespace ExpenseTracking.Dal
             }
         }
 
-        public async Task<double> CalculateReloExpenseByParcel(string parcelTCAD)
+        public async Task<decimal> CalculateReloExpenseByParcel(string parcelTCAD)
         {
             if (string.IsNullOrEmpty(parcelTCAD) /*||  more validation conditions (not exist in Parcel table)  */)
             {

@@ -1,12 +1,7 @@
-﻿using com.hdr.rowmgr.Relocation;
-using ROWM.Dal;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ROWM.Dal
 {
@@ -18,7 +13,7 @@ namespace ROWM.Dal
 
         public Guid ParcelId { get; set; }
 
-        public virtual ICollection<RelocationCase> Cases { get; } = new HashSet<RelocationCase>();
+        public virtual ICollection<RelocationCase> Cases { get; set; } = new HashSet<RelocationCase>();
 
         public DateTimeOffset Created { get; set; }
         public DateTimeOffset LastModified { get; set; }

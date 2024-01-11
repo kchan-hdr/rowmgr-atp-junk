@@ -46,6 +46,8 @@
     <PackageReference Include="Azure.Security.KeyVault.Keys" Version="4.0.0" />
     <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.0.0" />
     <PackageReference Include="EntityFramework" Version="6.4.4" />
+    <PackageReference Include="Humanizer" Version="2.14.1" />
+    <PackageReference Include="libphonenumber-csharp" Version="8.13.27" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.14.0" />
     <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.AzureKeyVault.HostingStartup" Version="2.0.4" />
@@ -142,7 +144,11 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
-    <Content Update="wwwroot\index.js">
+    <Content Update="wwwroot\ar\index.css">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Update="wwwroot\ar\index.js">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
