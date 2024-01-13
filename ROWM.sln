@@ -64,7 +64,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Relocation.Contracts", "Rel
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Relocation.DAL", "Relocation.DAL\Relocation.DAL.csproj", "{211FB7A1-1228-425E-8DA7-BF9F9E8E6C3A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExpenseTracking", "ExpenseTracking\ExpenseTracking.csproj", "{1BA254EE-8823-4D3B-A48A-B305BFD24236}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExpenseTracking", "ExpenseTracking\ExpenseTracking.csproj", "{1BA254EE-8823-4D3B-A48A-B305BFD24236}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Report", "Report\Report.csproj", "{43271CD0-5335-41E0-8151-EE971B9A3B5D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -314,6 +316,14 @@ Global
 		{1BA254EE-8823-4D3B-A48A-B305BFD24236}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1BA254EE-8823-4D3B-A48A-B305BFD24236}.Release|x64.ActiveCfg = Release|Any CPU
 		{1BA254EE-8823-4D3B-A48A-B305BFD24236}.Release|x64.Build.0 = Release|Any CPU
+		{43271CD0-5335-41E0-8151-EE971B9A3B5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43271CD0-5335-41E0-8151-EE971B9A3B5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43271CD0-5335-41E0-8151-EE971B9A3B5D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{43271CD0-5335-41E0-8151-EE971B9A3B5D}.Debug|x64.Build.0 = Debug|Any CPU
+		{43271CD0-5335-41E0-8151-EE971B9A3B5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43271CD0-5335-41E0-8151-EE971B9A3B5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43271CD0-5335-41E0-8151-EE971B9A3B5D}.Release|x64.ActiveCfg = Release|Any CPU
+		{43271CD0-5335-41E0-8151-EE971B9A3B5D}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

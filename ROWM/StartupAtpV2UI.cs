@@ -70,6 +70,7 @@ namespace ROWM
             services.AddScoped<IActionItemRepository, ActionItemRepository>();
             services.AddScoped<ICostEstimateRepository, CostEstimateRepository>();
             services.AddScoped<ROWM.Dal.AppRepository>();
+            services.AddScoped<ROWM.Reports_Ex.IRowmReports, ROWM.Reports_Ex.SyncFusionReport>();
             services.AddScoped<DeleteHelper>();
             services.AddSingleton<ROWM.Dal.DocTypes>(fac => new DocTypes(fac.GetRequiredService<ROWM_Context>()));
             services.AddScoped<Controllers.IParcelStatusHelper, Controllers.ParcelStatusHelperV2>();
@@ -126,11 +127,15 @@ namespace ROWM
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
+            var syncfusionKey = Configuration["syncfusion"];
+            if (!string.IsNullOrWhiteSpace(syncfusionKey))
+                Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(syncfusionKey);
+
             app.UseExceptionHandler("/Home/Error");
  
             app.UseStaticFiles();
 
-            app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+            app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("Content-Disposition"));
 
             app.UseMvc(routes =>
             {

@@ -113,6 +113,7 @@
     <ProjectReference Include="..\Relocation.Contracts\Relocation.Contracts.csproj" />
     <ProjectReference Include="..\Relocation.DAL\Relocation.DAL.csproj" />
     <ProjectReference Include="..\Reports\Reports.csproj" />
+    <ProjectReference Include="..\Report\Report.csproj" />
     <ProjectReference Include="..\ROWM3.Dal\ROWM3.Dal.csproj" />
     <ProjectReference Include="..\SharePointInterface\SharePointInterface.csproj" />
     <ProjectReference Include="..\TxDotNeogitations\TxDotNeogitations.csproj" />

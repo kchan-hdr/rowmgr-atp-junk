@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -52,6 +53,26 @@ namespace ROWM.Controllers
             var payload = await _reports.GenerateReport(r);
             return File(payload.Content, payload.Mime, payload.Filename);
         }
+
+        #region new syncfusion reporting engine
+        [HttpGet("export3")]
+        public async Task<IEnumerable<Reports_Ex.ReportDef>> GetReportsList([FromServices] Reports_Ex.IRowmReports r) =>
+            (await r.GetReports()).Select(rx => { rx.ReportUrl = $"{UriHelper.GetEncodedUrl(Request)}/{rx.ReportCode}"; return rx; });
+
+        [HttpGet("export3/{reportCode}")]
+        public async Task<ActionResult> GetReport(string reportCode, [FromServices] Reports_Ex.IRowmReports r)
+        {
+            try
+            {
+                var payload = await r.GenerateReport(reportCode);
+                return File(payload.Content, payload.Mime, payload.Filename);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
+        #endregion
 
         [HttpGet("export/acq")]
         public async Task<IActionResult> DummyReport()
