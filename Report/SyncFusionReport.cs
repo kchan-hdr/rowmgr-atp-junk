@@ -34,26 +34,34 @@ namespace ROWM.Reports_Ex
             {
                 var myConnection = _context.Database.Connection;
                 var myCommand = myConnection.CreateCommand();
-                myCommand.CommandText = myReport.ReportQuery ?? $"SELECT * FROM {myReport.ReportViewName}";
                 myCommand.CommandType = System.Data.CommandType.Text;
                 if (myConnection.State != System.Data.ConnectionState.Open)
                     await myCommand.Connection.OpenAsync();
-                var myReader = await myCommand.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
 
                 IWorkbook workbook = CreateWorkingCopy(myReport);
-                IWorksheet sheet = workbook.Worksheets[0];
-
-                sheet.ImportDataReader(myReader, true, 1, 1, true);
-
                 var headerStyle = workbook.Styles.Add($"ColumnHeaderStyle_{Guid.NewGuid()}");        // deconflict style name
                 headerStyle.Font.Bold = true;
 
-                sheet.SetDefaultRowStyle(1, headerStyle);
-                sheet.UsedRange.AutofitColumns();
+                foreach (var view in myReport.ExtraViews)
+                {
+                    IWorksheet currSheet = workbook.Worksheets.FirstOrDefault(sheet => sheet.Name == view.TabName) ?? workbook.Worksheets.Create(view.TabName);
+
+                    myCommand.CommandText = view.ViewQuery ?? $"SELECT * FROM {view.ViewName}";
+                    var myReader = await myCommand.ExecuteReaderAsync();
+                    currSheet.ImportDataReader(myReader, true, 1, 1, true);
+
+                    if (!workbook.CustomDocumentProperties.Contains("templated"))
+                    {
+                        currSheet.SetDefaultRowStyle(1, headerStyle);
+                        currSheet.UsedRange.AutofitColumns();
+                    }
+                }
+
+                myConnection.Close();
 
                 // meta data
                 var dt = System.DateTimeOffset.Now.ToLocalTime().DateTime;
-                IWorksheet meta = workbook.Worksheets.Last();
+                IWorksheet meta = workbook.Worksheets.Create("Report Properties");
                 meta.Name = "Report Properties";
                 meta.Range["A1"].Text = "Printed";
                 meta.Range["B1"].Text = dt.ToLongDateString();
@@ -101,6 +109,7 @@ namespace ROWM.Reports_Ex
                     if (ms != null)
                     {
                         book = excelEngine.Excel.Workbooks.Open(ms);
+                        book.CustomDocumentProperties["templated"].Text = d.TemplateFileName;
                         book.Worksheets.Create("Report Properties");
                         return book;
                     }
@@ -108,8 +117,7 @@ namespace ROWM.Reports_Ex
             }
             
             // always return something
-            book = excelEngine.Excel.Workbooks.Create(2);
-            book.Worksheets[0].Name = "Data";
+            book = excelEngine.Excel.Workbooks.Create(0);
             return book;
         }
         #endregion
@@ -129,11 +137,36 @@ namespace ROWM.Reports_Ex
         }
         async Task<ReportList> GetReportListFromDb(string code)
         {
-            return await _context.Database.SqlQuery<ReportList>(
-                    "SELECT ReportId, Name, Description, ReportViewName, ReportQuery, TemplateFileName FROM App.Report WHERE IsActive = 1 AND ReportId = @code"
+            var r = await _context.Database.SqlQuery<ReportList>(
+                    "SELECT ReportId, Name, Description, ReportViewName, ReportQuery, TemplateFileName, TabName FROM App.Report WHERE IsActive = 1 AND ReportId = @code"
                     , new SqlParameter("code", code) 
                 ).FirstOrDefaultAsync();
+
+            var extraViews = await _context.Database.SqlQuery<ExtraView>(
+                "SELECT TabName, ViewName, ViewQuery, DisplayOrder FROM App.Report_Extra_View WHERE IsActive = 1 AND ReportId = @code ORDER BY DisplayOrder"
+                , new SqlParameter("code", code)
+                ).ToListAsync();
+
+            r.ExtraViews = CollectViews(extraViews, r);
+
+            return r;
         }
+
+        private ICollection<ExtraView> CollectViews(ICollection<ExtraView> extraViews, ReportList r)
+        {
+            var originalView = new ExtraView
+            {
+                TabName = r.TabName ?? r.Name,
+                ViewName = r.ReportViewName,
+                ViewQuery = r.ReportQuery,
+                DisplayOrder = 0
+            };
+
+            extraViews.Add(originalView);
+
+            return extraViews.OrderBy(view => view.DisplayOrder).ToList();
+        }
+
         #endregion
     }
 
@@ -142,8 +175,23 @@ namespace ROWM.Reports_Ex
         public int ReportId { get; private set; }
         public string Name { get; private set; }
         public string Description { get; private set; }
+        public string TabName { get; private set; }
         public string ReportViewName { get; private set; }
         public string ReportQuery { get; private set; }
         public string TemplateFileName { get; private set; }
+        public virtual ICollection<ExtraView> ExtraViews { get; set; } = new HashSet<ExtraView>();
+
+    }
+
+    public class ExtraView
+    {
+        public int ExtraViewId { get; set; }
+        public string TabName { get; set; }
+        public string Description { get; set; }
+        public string ViewName { get; set; }
+        public string ViewQuery { get; set; }
+        public int ReportId { get; set; }
+        public int DisplayOrder { get; set; }
+        public bool IsActive { get; set; }
     }
 }
