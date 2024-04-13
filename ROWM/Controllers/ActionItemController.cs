@@ -29,7 +29,7 @@ namespace ROWM.Controllers
             if (items.Any())
                 return new JsonResult(items.Select(ix => new ActionItem_dto(ix)));
 
-            return NoContent();
+            return new JsonResult( Enumerable.Empty<ActionItem_dto>());
         }
 
         [HttpPost("parcels/{pid}/actionitems")]
