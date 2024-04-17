@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ROWM.Dal
 {
-    [Table("Vested_Owner", Schema ="Austin")]
+    [Table("Vested_Owner", Schema ="ROWM")]
     public class VestedOwner
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -16,39 +16,42 @@ namespace ROWM.Dal
 
         public Guid ParcelId { get; set; }
 
-        [Column("Acquisition_Parcel_No")]
+        [NotMapped][Column("Acquisition_Parcel_No")]
         public string AcqNo { get; set; }
 
-        [Column("TCAD_PROP_ID")]
+        [NotMapped][Column("TCAD_PROP_ID")]
         public string Tcad { get; set; }
 
-        [Column("Tracking_Number")]
+        [NotMapped][Column("Tracking_Number")]
         public string TrackingNumber { get; set; }
 
-        [Column("Vested_Owner_Name")]
+        [Column("OwnerName")]
         public string VestedOwnerName { get; set; }
 
-        [Column("Vested_Owner_Address")]
+        [Column("OwnerAddress")]
         public string VestedOwnerAddress { get; set; }
 
-        [Column("Is_Verified")]
+        [NotMapped][Column("Is_Verified")]
         public bool IsVerified { get; set; } = false;
+        public bool IsDeleted { get; set; } = false;
 
-        [Column("Source_Title_Document")]
+        [NotMapped][Column("Source_Title_Document")]
         public Guid? TitleDocument { get; set; }
 
-        [Column("Agent")]
+        [NotMapped][Column("Agent")]
         public Guid? AgentId { get; set; }
 
-        public DateTimeOffset LastModified { get; set; } = DateTimeOffset.Now;
+        public DateTimeOffset Created { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset LastModified { get; set; } = DateTimeOffset.UtcNow;
         public string ModifiedBy { get; set; }
 
+        public string OwnerType { get; set; }
 
         //navigation
         [ForeignKey(nameof(ParcelId))]
         virtual public Parcel ParentParcel { get; set; }
 
-        [ForeignKey(nameof(AgentId))]
-        virtual public Agent Agent { get; set; }
+        //[ForeignKey(nameof(AgentId))]
+        //virtual public Agent Agent { get; set; }
     }
 }

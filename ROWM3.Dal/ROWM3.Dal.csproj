@@ -85,6 +85,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AcquisitionInfo.cs" />
     <Compile Include="ActionItem.cs" />
     <Compile Include="ActionItemActivity.cs" />
     <Compile Include="ActionItemGroup.cs" />
@@ -156,6 +157,7 @@
     <Compile Include="Repository\FilteredStatisticsRepository.cs" />
     <Compile Include="Repository\IStatisticsRepository.cs" />
     <Compile Include="Repository\OwnerRepository.cs" />
+    <Compile Include="Repository\OwnershipRepository.cs" />
     <Compile Include="Repository\ParcelOwnershipHelper.cs" />
     <Compile Include="Repository\ParcelStatusRepository.cs" />
     <Compile Include="Repository\StatisticsRepository.cs" />

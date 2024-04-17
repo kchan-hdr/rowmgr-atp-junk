@@ -12,6 +12,10 @@ namespace ROWM.Dal
         public ROWM_Context(string c = "name=ROWM_Context")
             : base(c)
         {
+
+#if DEBUG
+Database.Log = s => System.Console.WriteLine(s);
+#endif
         }
 
         public virtual DbSet<Agent> Agent { get; set; }
@@ -46,6 +50,7 @@ namespace ROWM.Dal
         public virtual DbSet<DocumentTiltlePl> DocumentTitlePicklist { get; set; }
         public virtual DbSet<DistributionList> DistributionList { get; set; }
 
+        public virtual DbSet<AcqParcel> AcqParcel { get; set; }
         public virtual DbSet<VestedOwner> VestedOwner { get; set; }
 
 

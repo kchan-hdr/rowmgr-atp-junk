@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace geographia.ags
 {
-    public class AtpParcel : FeatureService_Base, IFeatureUpdate, IRenderer
+    public class AtpParcel : FeatureService_Base, IFeatureUpdate, IRenderer, IFeatureUpdate_Austin
     {
         static readonly string _PARCEL_KEY = "Assessor_Parcel_Number";
         readonly AgsSchema _layers;

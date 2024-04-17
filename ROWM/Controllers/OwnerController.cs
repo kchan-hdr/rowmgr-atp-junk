@@ -19,9 +19,10 @@ namespace ROWM.Controllers
     public class OwnerController : ControllerBase
     {
         readonly OwnerRepository _repo;
+        readonly OwnershipRepository _Orepo;
         readonly CostEstimateContext _ctx;
         readonly IOwnershipHelper _helper;
-        public OwnerController(OwnerRepository r, CostEstimateContext c, IOwnershipHelper h) => (_repo, _ctx, _helper) = (r, c, h);
+        public OwnerController(OwnerRepository r, OwnershipRepository o, CostEstimateContext c, IOwnershipHelper h) => (_repo, _Orepo, _ctx, _helper) = (r, o, c, h);
 
         [Route("owners/{id:Guid}"), HttpGet]
         public async Task<OwnerDto2> GetOwner(Guid id) => new OwnerDto2(await _repo.GetOwner(id));
@@ -98,9 +99,9 @@ namespace ROWM.Controllers
         {
             var parcels = new List<Guid>();
             parcels.AddRange(await _helper.GetParcelsByApn(o.Parcels));
-            parcels.AddRange(await _helper.GetParcelsByAcquisitionUnit(o.AcquisitionUnits));
+            //parcels.AddRange(await _helper.GetParcelsByAcquisitionUnit(o.AcquisitionUnits));
 
-            _ = await SplitAcquisitionUnit(o.Parcels);
+            _ = await _Orepo.SplitAcquisitionUnit(o.Parcels);
 
             return await _helper.NewOwnership(parcels, owner.OwnerId);
         }
@@ -125,7 +126,7 @@ namespace ROWM.Controllers
         /// <param name="o"></param>
         /// <returns></returns>
         [HttpPost("parcels/{pid}/owners")]
-        public async Task<ActionResult<ParcelGraph>> SetOwner([FromServices] DocTypes _docTypes, string pid, [FromBody] OwnershipRequest o)
+        public async Task<ActionResult<ParcelGraph>> SetOwner([FromServices] DocTypes _docTypes, [FromServices] geographia.ags.IFeatureUpdate_Austin fu, string pid, [FromBody] OwnershipRequest o)
         {
             var p = await _repo.GetParcel(pid);
             if (p == null)
@@ -133,9 +134,37 @@ namespace ROWM.Controllers
 
             var myLord = await GetOrCreateOwner(o);
             await ChangeOwnerImpl(myLord, o);
+            await fu.UpdateFeature_Ex(pid, new Dictionary<string, dynamic>() { { "OwnerName", myLord.PartyName } });
 
             return new ParcelGraph(p, _docTypes, await _repo.GetDocumentsForParcel(pid));
         }
+
+        #region vested owner
+        [HttpGet("parcels/{pid}/vestedOwners")]
+        public async Task<ActionResult<VestedOwnerDto>> GetVestedOwnerForParcel(string pid, [FromServices]OwnershipRepository _Orepo)
+        {
+            var myVestedOwner = await _Orepo.GetVestedOwnerForParcel(pid);
+            if (myVestedOwner == null) return NotFound();
+            return Ok(value: myVestedOwner);
+        }
+
+        [HttpPost("parcels/{pid}/vestedOwners")]
+        public async Task<ActionResult<VestedOwnerDto>> SetVestedOwner(string pid, [FromBody] OwnershipRequest o)
+        {
+            var p = await _repo.GetParcel(pid);
+            if (p == null)
+                return BadRequest();
+
+            var myVestOwner = await _Orepo.AddVestedOwner(o.Name, o.Address, p.ParcelId, o.OwnerType);
+
+            return myVestOwner;
+        }
+
+        [HttpGet("owners/{name}/vestedOwners", Name = "Find Vested Owners")]
+        public async Task<IEnumerable<VestedOwnerDto>> FindVestedOwner(string name, [FromServices] OwnershipRepository _Orepo) =>
+            (await _Orepo.FindVestedOwner(name));
+
+        #endregion
 
         ///
         [HttpGet("parcels/{id}/TCad_Owner")]
@@ -155,7 +184,8 @@ namespace ROWM.Controllers
         }
 
         #region helper
-        // split acquisition unit
+        // split acquisition
+        [Obsolete("use Split from OwnershipRepositry")]
         async Task<bool> SplitAcquisitionUnit(IEnumerable<string> parcels)
         {
             var pid = string.Join(",", parcels.Select(px => $"'{px}'"));
@@ -194,7 +224,7 @@ namespace ROWM.Controllers
         #endregion
     }
 
-    public class OwnershipRequest 
+    public class OwnershipRequest_ 
     {
         public Guid? OwnerId { get; set; }
         public string Name { get; set; }
