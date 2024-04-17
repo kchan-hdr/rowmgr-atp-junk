@@ -44,11 +44,19 @@ namespace ROWM.Reports_Ex
 
                 foreach (var view in myReport.ExtraViews)
                 {
-                    IWorksheet currSheet = workbook.Worksheets.FirstOrDefault(sheet => sheet.Name == view.TabName) ?? workbook.Worksheets.Create(view.TabName);
+                    IWorksheet currSheet = workbook.Worksheets.FirstOrDefault(sheet => sheet.Name == view.TabName) ?? workbook.Worksheets.Create(view.TabName ?? "Data");
 
-                    myCommand.CommandText = view.ViewQuery ?? $"SELECT * FROM {view.ViewName}";
+                    myCommand.CommandText = view.ReportQuery ?? $"SELECT * FROM {view.ReportViewName}";
                     var myReader = await myCommand.ExecuteReaderAsync();
-                    currSheet.ImportDataReader(myReader, true, 1, 1, true);
+
+                    string rangeName = $"{view.TabName}_DataImportRange".Replace(" ", "");
+
+                    IName namedRange = workbook.Names[rangeName];
+                    if (namedRange != null)
+                    {
+                        currSheet.ImportDataReader(myReader, namedRange, true);
+                    }
+                    else { currSheet.ImportDataReader(myReader, true, 1, 1, true); }
 
                     if (!workbook.CustomDocumentProperties.Contains("templated"))
                     {
@@ -61,7 +69,8 @@ namespace ROWM.Reports_Ex
 
                 // meta data
                 var dt = System.DateTimeOffset.Now.ToLocalTime().DateTime;
-                IWorksheet meta = workbook.Worksheets.Create("Report Properties");
+                IWorksheet meta = workbook.Worksheets.FirstOrDefault(s => s.Name == "Report Properties") ?? workbook.Worksheets.Create("Report Properties");
+
                 meta.Name = "Report Properties";
                 meta.Range["A1"].Text = "Printed";
                 meta.Range["B1"].Text = dt.ToLongDateString();
@@ -143,7 +152,7 @@ namespace ROWM.Reports_Ex
                 ).FirstOrDefaultAsync();
 
             var extraViews = await _context.Database.SqlQuery<ExtraView>(
-                "SELECT TabName, ViewName, ViewQuery, DisplayOrder FROM App.Report_Extra_View WHERE IsActive = 1 AND ReportId = @code ORDER BY DisplayOrder"
+                "SELECT TabName, ReportViewName, ReportQuery, DisplayOrder FROM App.Report_Extra_View WHERE IsActive = 1 AND ReportId = @code ORDER BY DisplayOrder"
                 , new SqlParameter("code", code)
                 ).ToListAsync();
 
@@ -157,8 +166,8 @@ namespace ROWM.Reports_Ex
             var originalView = new ExtraView
             {
                 TabName = r.TabName ?? r.Name,
-                ViewName = r.ReportViewName,
-                ViewQuery = r.ReportQuery,
+                ReportViewName = r.ReportViewName,
+                ReportQuery = r.ReportQuery,
                 DisplayOrder = 0
             };
 
@@ -188,8 +197,8 @@ namespace ROWM.Reports_Ex
         public int ExtraViewId { get; set; }
         public string TabName { get; set; }
         public string Description { get; set; }
-        public string ViewName { get; set; }
-        public string ViewQuery { get; set; }
+        public string ReportViewName { get; set; }
+        public string ReportQuery { get; set; }
         public int ReportId { get; set; }
         public int DisplayOrder { get; set; }
         public bool IsActive { get; set; }
