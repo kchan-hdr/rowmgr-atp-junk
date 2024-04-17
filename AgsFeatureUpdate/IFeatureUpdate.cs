@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace geographia.ags
@@ -12,5 +13,10 @@ namespace geographia.ags
         Task<bool> UpdateRating(string parcelId, string track, int rating);
         Task<bool> UpdateFeatureDocuments(string parcelId, string track, string documentURL);
         Task<(string Token, DateTimeOffset Expiration)> Token();
+    }
+
+    public interface IFeatureUpdate_Austin
+    {
+        Task<bool> UpdateFeature_Ex(string parcelId, Dictionary<string, dynamic> attr);
     }
 }
