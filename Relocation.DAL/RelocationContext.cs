@@ -22,6 +22,7 @@ namespace ROWM.Dal
         public DbSet<Parcel> Parcels { get; set; }
         public DbSet<Document> Documents { get; set; }
         public DbSet<ContactLog> ContactLogs { get; set; }
+        public DbSet<ActionItem> ActionItems { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -46,6 +47,15 @@ namespace ROWM.Dal
                     cx.ToTable("Relocation_Case_Documents", "Austin");
                 });
 
+            modelBuilder.Entity<RelocationCase>()
+                .HasMany(rx => rx.ActionItems)
+                .WithMany()
+                .Map(cx =>
+                {
+                    cx.MapLeftKey("RelocationCaseId");
+                    cx.MapRightKey("ActionItemId");
+                    cx.ToTable("Relocation_Case_Action_Items", "Austin");
+                });
 
             #region override mapping conventions
             modelBuilder.Entity<Agent>()
@@ -57,6 +67,11 @@ namespace ROWM.Dal
                 .HasMany(e => e.Parcel)
                 .WithMany(e => e.ContactLog)
                 .Map(m => m.ToTable("ParcelContactLogs", "ROWM"));
+
+            modelBuilder.Entity<ActionItem>()
+                .HasRequired(e => e.ParentParcel)
+                .WithMany(e => e.ActionItems)
+                .Map(m => m.ToTable("Action_Item", "ROWM"));
 
             modelBuilder.Entity<Owner>()
                 .HasMany(e => e.ContactLog)

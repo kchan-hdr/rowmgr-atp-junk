@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ROWM.Dal
 {
-    [Table("Relocation_Case", Schema = "Austin")]
+    [Table("Relocation_Case", Schema ="Austin")]
     public partial class RelocationCase
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -42,5 +42,6 @@ namespace ROWM.Dal
 
         public virtual ICollection<ContactLog> Logs { get; } = new HashSet<ContactLog>();
         public virtual ICollection<Document> Documents { get; } = new HashSet<Document>();
+        public virtual ICollection<ActionItem> ActionItems { get; } = new HashSet<ActionItem>();
     }
 }

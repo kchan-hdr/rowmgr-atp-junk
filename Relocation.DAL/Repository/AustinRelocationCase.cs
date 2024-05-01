@@ -17,6 +17,7 @@ namespace ROWM.Dal
 
         public IEnumerable<Guid> DocumentIds => this.Documents?.Select(dx => dx.DocumentId);
         public IEnumerable<Guid> ContactLogIds => this.Logs?.Select(lx => lx.ContactLogId);
+        public IEnumerable<Guid> ActionItemIds => this.ActionItems?.Select(lx => lx.ActionItemId);
 
         public IEnumerable<IRelocationEligibilityActivity> EligibilityHistory => this.History;
         public IEnumerable<IRelocationDisplaceeActivity> DisplaceeActivities => this.Activities;

@@ -41,6 +41,9 @@ namespace ROWM.Dal
                         c.RelocationNumber,
                         c.RelocationType,
                         c.Status,
+                        Docx = c.Documents.Select(dx => dx.DocumentId),
+                        Logs = c.Logs.Select(lx => lx.ContactLogId),
+                        Acts = c.ActionItems.Select(ax => ax.ActionItemId),
                         Steps = c.Activities.Select(a => a.ActivityCode).Distinct()
                     });
 
@@ -61,6 +64,13 @@ namespace ROWM.Dal
                 };
                 foreach (var a in r.Steps)
                     rx.Activities.Add(new RelocationDisplaceeActivity { ActivityCode = a });
+
+                foreach (var d in r.Logs)
+                    rx.Logs.Add(new ContactLog { ContactLogId = d });
+                foreach (var d in r.Docx)
+                    rx.Documents.Add(new Document { DocumentId = d });
+                foreach (var a in r.Acts)
+                    rx.ActionItems.Add(new ActionItem { ActionItemId = a });
 
                 return rx;
             });
@@ -117,5 +127,26 @@ namespace ROWM.Dal
             relo.Documents.Add(doc);
             return await _context.SaveChangesAsync();
         }
+
+        #region actionItems
+        public async Task<int> AttachActionItem(Guid caseId, Guid actId)
+        {
+            var c = await _context.RelocationCases.FindAsync(caseId);
+            var a = await _context.ActionItems.FindAsync(actId);
+
+            c.ActionItems.Add(a);
+
+            try
+            {
+                return await _context.SaveChangesAsync();
+            }
+            catch (Exception e)
+            {
+                Trace.TraceError(e.Message);
+                throw;
+            }
+        }
+        #endregion
+
     }
 }
