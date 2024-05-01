@@ -6,13 +6,13 @@ namespace ROWM.Dal
     using System.ComponentModel.DataAnnotations.Schema;
     using System.Data.Entity.Spatial;
 
-    [Table("ROWM.Roe_Status")]
+    [Table("ROWM.Roe_Status"), Obsolete()]
     public partial class Roe_Status
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
         public Roe_Status()
         {
-            Parcel = new HashSet<Parcel>();
+            //Parcel = new HashSet<Parcel>();
         }
 
         [Key]
@@ -28,7 +28,6 @@ namespace ROWM.Dal
 
         public bool IsActive { get; set; }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<Parcel> Parcel { get; set; }
+        //public virtual ICollection<Parcel> Parcel { get; set; }
     }
 }

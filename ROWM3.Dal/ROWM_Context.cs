@@ -126,10 +126,20 @@ Database.Log = s => System.Console.WriteLine(s);
                 .WithOptional(e => e.Parcel_Status)
                 .HasForeignKey(e => e.ParcelStatusCode);
 
-            modelBuilder.Entity<Roe_Status>()
-                .HasMany(e => e.Parcel)
-                .WithOptional(e => e.Roe_Status)
-                .HasForeignKey(e => e.RoeStatusCode);
+            modelBuilder.Entity<Parcel>()
+                .HasOptional(p => p.Parcel_Status)
+                .WithMany()
+                .HasForeignKey(p => p.ParcelStatusCode);
+
+            modelBuilder.Entity<Parcel>()
+                .HasOptional(p => p.Roe_Status)
+                .WithMany()
+                .HasForeignKey(p => p.RoeStatusCode);
+
+            //modelBuilder.Entity<Roe_Status>()
+            //    .HasMany(e => e.Parcel)
+            //    .WithOptional()
+            //    .HasForeignKey(e => e.RoeStatusCode);
 
             modelBuilder.Entity<Followup>()
                 .HasRequired(f => f.ParentContactLog)

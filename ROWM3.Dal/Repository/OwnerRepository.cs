@@ -210,7 +210,7 @@ namespace ROWM.Dal
             public string Assessor_Parcel_Number { get; set; }
             public string SitusAddress { get; set; }
             public ICollection<ParcelAllocation> ParcelAllocations { get; set; }
-            public Roe_Status Roe_Status { get; set; }
+            public Parcel_Status Roe_Status { get; set; }
             public bool IsImpacted { get; set; }
             public ICollection<Ownership> Ownership { get; set; }
             public ICollection<ContactLog> ContactLog { get; set; }

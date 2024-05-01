@@ -85,9 +85,11 @@ namespace ROWM.Dal
         public string FinalEasementOffer_OfferNotes { get; set; }
 
         [StringLength(40)]
+        [ForeignKey(nameof(Parcel_Status))]
         public string ParcelStatusCode { get; set; }
 
         [StringLength(40)]
+        [ForeignKey(nameof(Roe_Status))]
         public string RoeStatusCode { get; set; }
 
         [StringLength(40)]
@@ -105,7 +107,7 @@ namespace ROWM.Dal
 
         public virtual Parcel_Status Parcel_Status { get; set; }
 
-        public virtual Roe_Status Roe_Status { get; set; }
+        public virtual Parcel_Status Roe_Status { get; set; }
         public virtual ICollection<RoeCondition> Conditions { get; set; }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]

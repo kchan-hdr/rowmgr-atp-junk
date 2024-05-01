@@ -163,7 +163,6 @@
     <Compile Include="Repository\StatisticsRepository.cs" />
     <Compile Include="RoeCondition.cs" />
     <Compile Include="Roe_Status.cs" />
-    <Compile Include="ROWM_SdeContext.cs" />
     <Compile Include="ROWM_Context.cs" />
     <Compile Include="StatusActivity.cs" />
     <Compile Include="StatusCategory.cs" />

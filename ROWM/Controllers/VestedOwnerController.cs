@@ -153,7 +153,7 @@ namespace ROWM.Controllers
             OwnerName = o.VestedOwnerName;
             OwnerAddress = o.VestedOwnerAddress;
             IsVerified = o.IsVerified;
-            AgentName = o.Agent.AgentName;
+            //AgentName = o.Agent.AgentName;
             LastModified = o.LastModified;
             ModifiedBy = o.ModifiedBy;
 

@@ -144,7 +144,7 @@ namespace ROWM.Controllers
         public async Task<ActionResult<VestedOwnerDto>> GetVestedOwnerForParcel(string pid, [FromServices]OwnershipRepository _Orepo)
         {
             var myVestedOwner = await _Orepo.GetVestedOwnerForParcel(pid);
-            if (myVestedOwner == null) return NotFound();
+            //if (myVestedOwner == null) return NotFound();
             return Ok(value: myVestedOwner);
         }
 
