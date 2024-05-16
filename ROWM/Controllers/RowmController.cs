@@ -677,7 +677,7 @@ namespace ROWM.Controllers
 
             logRequest.ParcelIds.Add(pid);
             var myParcels = logRequest.ParcelIds.Distinct();
-            await UpdateLandownerScore(logRequest.Score, dt, myParcels);
+            //await UpdateLandownerScore(logRequest.Score, dt, myParcels);
 
             var log = await _repo.UpdateContactLog(myParcels, logRequest.ContactIds, l);
             var touched = await PromptStatus(myParcels);
