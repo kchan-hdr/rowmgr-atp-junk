@@ -135,6 +135,7 @@ namespace geographia.ags
                 attributes = new Status_Req
                 {
                     OBJECTID = i,
+                    roe = status,
                     ROE_Status = status,
                     ROE_Condition = condition
                 }
@@ -241,6 +242,8 @@ namespace geographia.ags
             public int OBJECTID { get; set; }
             [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
             public int? ParcelStatus { get; set; }
+            [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+            public int? roe { get; set; }
             [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
             public int? ROE_Status { get; set; }
             [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
