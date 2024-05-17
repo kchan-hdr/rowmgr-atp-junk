@@ -134,7 +134,10 @@ namespace ROWM.Controllers
 
             var myLord = await GetOrCreateOwner(o);
             await ChangeOwnerImpl(myLord, o);
-            await fu.UpdateFeature_Ex(pid, new Dictionary<string, dynamic>() { { "OwnerName", myLord.PartyName } });
+            await fu.UpdateFeature_Ex(pid, new Dictionary<string, dynamic>() { 
+                { "OwnerName", myLord.PartyName },
+                { "OwnerAddress", myLord.OwnerAddress }
+            });
 
             return new ParcelGraph(p, _docTypes, await _repo.GetDocumentsForParcel(pid));
         }
