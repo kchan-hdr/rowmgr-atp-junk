@@ -28,7 +28,11 @@ namespace ROWM.Dal
         {
             Owner myLord = null;
             if (o.OwnerId.HasValue)
+            {
                 myLord = await _helper.GetOwner(o.OwnerId.Value);
+                if (myLord != null && !string.IsNullOrWhiteSpace(o.Address))
+                    myLord.OwnerAddress = o.Address;
+            }
 
             if (myLord == null)
             {
