@@ -37,6 +37,7 @@
     <None Remove="Properties\PublishProfiles\ROWM - Web Deploy.pubxml" />
     <None Remove="Properties\PublishProfiles\ROWM-mezzy - Web Deploy.pubxml" />
     <None Remove="Properties\PublishProfiles\rowmgr2 - Web Deploy.pubxml" />
+    <None Remove="ReportTemplates\ATP_contact_log_template_sycfusion.docx" />
     <None Remove="ReportTemplates\ContactLogByParcel.docx" />
     <None Remove="ReportTemplates\ContactLogByParcel.dotx" />
     <None Remove="ReportTemplates\N94.docx" />
@@ -92,6 +93,7 @@
     <PackageReference Include="NSwag.AspNetCore" Version="13.6.2" />
     <PackageReference Include="Swashbuckle" Version="5.6.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="5.5.1" />
+    <PackageReference Include="Syncfusion.DocIO.Net.Core" Version="23.2.4" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="WebEssentials.AspNetCore.PWA" Version="1.0.65" />
     <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
@@ -101,6 +103,7 @@
     <DotNetCliToolReference Include="Microsoft.Extensions.SecretManager.Tools" Version="2.0.0" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="ReportTemplates\ATP_contact_log_template_sycfusion.docx" />
     <EmbeddedResource Include="ReportTemplates\ContactLogByParcel.docx" />
     <EmbeddedResource Include="ReportTemplates\N94.docx" />
   </ItemGroup>

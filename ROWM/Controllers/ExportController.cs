@@ -86,7 +86,7 @@ namespace ROWM.Controllers
 
 
         [Route("parcels/{pid}/logs"), HttpGet]
-        public async Task<IActionResult> ExportContactLogs(string pid, [FromServices] SiteDecoration _decoration)
+        public async Task<IActionResult> ExportContactLogs(string pid, [FromServices] ROWM_Context context)
         {
             if (string.IsNullOrWhiteSpace(pid))
                 return BadRequest();
@@ -95,8 +95,10 @@ namespace ROWM.Controllers
             var o = await _repo.GetOwner(p.Ownership.FirstOrDefault()?.OwnerId ?? default);
             p.ParcelContacts = o?.ContactInfo;
 
-            var h = new Models.ContactLogHelper(_decoration.SiteTitle());
-            var docx = await h.GeterateImpl(p);
+            var h = new Models.SyncfusionContactLogHelper(context);
+            var docx = await h.Generate(p);
+            //var h = new Models.ContactLogHelper(_decoration.SiteTitle());
+            //var docx = await h.GeterateImpl(p);
 
             return File(docx, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", $"{pid} Agent Log.docx");
         }
@@ -130,19 +132,6 @@ namespace ROWM.Controllers
             var docx = await h.GeneratePackage(p);
 
             return File(docx, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", $"{pid} Easement Offer Package.docx");
-        }
-
-        [HttpGet("export/contactlog/{parcelId}")]
-        [ProducesDefaultResponseType(typeof(File))]
-        public async Task<IActionResult> ContactLogByParcel(string parcelId)
-        {
-            var p = await _repo.GetParcel(parcelId);
-            if (p == null)
-                return NoContent();
-
-            var h = new Models.AtpRoeReportHelper();
-            var payload = await h.Generate(p);
-            return File(payload.Content, payload.Mime, payload.Filename);
         }
 
         [HttpGet("export/preacq")]
