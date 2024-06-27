@@ -209,7 +209,7 @@ namespace ROWM.Models
 
         private static bool ContainsHtml(string input)
         {
-            return !string.IsNullOrEmpty(input) && (input.Contains("<") && input.Contains(">"));
+            return !string.IsNullOrEmpty(input) && (input.Contains("<p>") && input.Contains("</p>"));
         }
     }
 
