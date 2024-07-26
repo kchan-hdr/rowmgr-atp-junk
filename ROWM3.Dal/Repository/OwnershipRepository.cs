@@ -26,13 +26,9 @@ namespace ROWM.Dal
 
         public async Task<Owner> GetOrCreateOwner(OwnershipRequest o)
         {
-            Owner myLord = null;
-            if (o.OwnerId.HasValue)
-            {
-                myLord = await _helper.GetOwner(o.OwnerId.Value);
-                if (myLord != null && !string.IsNullOrWhiteSpace(o.Address))
-                    myLord.OwnerAddress = o.Address;
-            }
+            Owner myLord = (o.OwnerId.HasValue)
+                ? await _helper.GetOwner(o.OwnerId.Value)
+                : null;
 
             if (myLord == null)
             {
@@ -52,6 +48,25 @@ namespace ROWM.Dal
 
 
             return myLord;
+        }
+
+        public async Task<Owner> ChangeOwnerDetails(OwnershipRequest o)
+        {
+            if (!o.OwnerId.HasValue)
+                throw new InvalidOperationException($"bad param {nameof(OwnershipRequest)}");
+
+            var owner = await _helper.GetOwner(o.OwnerId.Value);
+            if (!string.IsNullOrWhiteSpace(o.Address))
+                owner.OwnerAddress = o.Address;
+            if (!string.IsNullOrWhiteSpace(o.Name))
+                owner.PartyName = o.Name;
+            if (!string.IsNullOrWhiteSpace(o.OwnerType))
+                owner.OwnerType = o.OwnerType;
+
+            if (await _ctx.SaveChangesAsync() < 1)
+                Trace.TraceInformation($"not a real update to owner {o.OwnerId}");
+
+            return owner;
         }
 
         public async Task<Owner> ChangeOwner(Owner owner, OwnershipRequest o)

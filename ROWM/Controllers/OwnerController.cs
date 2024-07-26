@@ -133,7 +133,13 @@ namespace ROWM.Controllers
                 return BadRequest();
 
             var myLord = await GetOrCreateOwner(o);
-            await ChangeOwnerImpl(myLord, o);
+            if (myLord.OwnerId == o.OwnerId)
+            {
+                await _Orepo.ChangeOwnerDetails(o);
+            } else
+            {
+                await ChangeOwnerImpl(myLord, o);
+            }
             await fu.UpdateFeature_Ex(pid, new Dictionary<string, dynamic>() { 
                 { "OwnerName", myLord.PartyName },
                 { "OwnerAddress", myLord.OwnerAddress }
